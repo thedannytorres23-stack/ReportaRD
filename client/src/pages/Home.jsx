@@ -1,3 +1,5 @@
+import { useNavigate } from "react-router";
+
 import {
   Bell,
   Construction,
@@ -54,7 +56,10 @@ const reportes = [
 ];
 
 export default function Home() {
+  const navigate = useNavigate();
+
   return (
+
     <div className="min-h-screen bg-slate-950 text-white">
       <div className="mx-auto min-h-screen max-w-md border-x border-white/5 bg-[#06101f] pb-24">
         <header className="flex items-center justify-between px-5 pb-5 pt-6">
@@ -92,6 +97,7 @@ export default function Home() {
 
             <button
               type="button"
+              onClick={() => navigate("/reportar")}
               className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-red-500 px-5 py-4 font-semibold shadow-lg shadow-red-500/20 transition active:scale-[0.98]"
             >
               <Plus size={21} strokeWidth={3} />
