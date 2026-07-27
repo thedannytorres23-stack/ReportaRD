@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Bell,
   Construction,
@@ -58,6 +59,14 @@ const reportes = [
 export default function Home({ onLogout }) {
   const navigate = useNavigate();
 
+  const [mostrarCierreSesion, setMostrarCierreSesion] =
+    useState(false);
+
+  const confirmarCierreSesion = () => {
+    setMostrarCierreSesion(false);
+    onLogout();
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <div className="mx-auto min-h-screen max-w-md border-x border-white/5 bg-[#06101f] pb-24">
@@ -87,7 +96,7 @@ export default function Home({ onLogout }) {
 
             <button
               type="button"
-              onClick={onLogout}
+              onClick={() => setMostrarCierreSesion(true)}
               aria-label="Cerrar sesión"
               className="rounded-xl p-2 text-slate-400 transition hover:bg-white/5 hover:text-red-400"
             >
@@ -235,6 +244,51 @@ export default function Home({ onLogout }) {
           </button>
         </nav>
       </div>
+
+      {mostrarCierreSesion && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="titulo-cerrar-sesion"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center"
+        >
+          <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#0b1626] p-6 shadow-2xl">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/15 text-red-400">
+              <LogOut size={23} />
+            </div>
+
+            <h2
+              id="titulo-cerrar-sesion"
+              className="mt-5 text-xl font-bold"
+            >
+              ¿Quieres cerrar sesión?
+            </h2>
+
+            <p className="mt-2 text-sm leading-6 text-slate-400">
+              Tendrás que volver a introducir tus datos para entrar a
+              ReportaRD. Tu cuenta y tus publicaciones no serán eliminadas.
+            </p>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setMostrarCierreSesion(false)}
+                className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-slate-200"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={confirmarCierreSesion}
+                className="flex-1 rounded-2xl bg-red-500 px-4 py-3 font-semibold text-white"
+              >
+                Cerrar sesión
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
