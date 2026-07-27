@@ -1,10 +1,9 @@
-import { useNavigate } from "react-router";
-
 import {
   Bell,
   Construction,
   House,
   Lightbulb,
+  LogOut,
   Map,
   Menu,
   MoreHorizontal,
@@ -12,6 +11,7 @@ import {
   Trash2,
   UserRound,
 } from "lucide-react";
+import { useNavigate } from "react-router";
 
 const categorias = [
   {
@@ -55,11 +55,10 @@ const reportes = [
   },
 ];
 
-export default function Home() {
+export default function Home({ onLogout }) {
   const navigate = useNavigate();
 
   return (
-
     <div className="min-h-screen bg-slate-950 text-white">
       <div className="mx-auto min-h-screen max-w-md border-x border-white/5 bg-[#06101f] pb-24">
         <header className="flex items-center justify-between px-5 pb-5 pt-6">
@@ -75,14 +74,26 @@ export default function Home() {
             Reporta<span className="text-red-500">RD</span>
           </h1>
 
-          <button
-            type="button"
-            aria-label="Ver notificaciones"
-            className="relative rounded-xl p-2 text-slate-300 transition hover:bg-white/5"
-          >
-            <Bell size={23} />
-            <span className="absolute right-2 top-1 h-2 w-2 rounded-full bg-red-500" />
-          </button>
+          <div className="flex items-center">
+            <button
+              type="button"
+              aria-label="Ver notificaciones"
+              className="relative rounded-xl p-2 text-slate-300 transition hover:bg-white/5"
+            >
+              <Bell size={23} />
+
+              <span className="absolute right-2 top-1 h-2 w-2 rounded-full bg-red-500" />
+            </button>
+
+            <button
+              type="button"
+              onClick={onLogout}
+              aria-label="Cerrar sesión"
+              className="rounded-xl p-2 text-slate-400 transition hover:bg-white/5 hover:text-red-400"
+            >
+              <LogOut size={21} />
+            </button>
+          </div>
         </header>
 
         <main className="px-5">
@@ -136,8 +147,11 @@ export default function Home() {
               <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(#3b82f6_1px,transparent_1px),linear-gradient(90deg,#3b82f6_1px,transparent_1px)] [background-size:32px_32px]" />
 
               <span className="absolute left-[20%] top-[55%] h-4 w-4 rounded-full border-4 border-red-300 bg-red-500 shadow-lg shadow-red-500/50" />
+
               <span className="absolute left-[52%] top-[25%] h-4 w-4 rounded-full border-4 border-violet-300 bg-violet-500 shadow-lg shadow-violet-500/50" />
+
               <span className="absolute right-[18%] top-[48%] h-4 w-4 rounded-full border-4 border-amber-300 bg-amber-500 shadow-lg shadow-amber-500/50" />
+
               <span className="absolute bottom-[18%] right-[38%] h-4 w-4 rounded-full border-4 border-green-300 bg-green-500 shadow-lg shadow-green-500/50" />
             </div>
 
@@ -154,7 +168,9 @@ export default function Home() {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-semibold">{reporte.titulo}</h4>
+                    <h4 className="font-semibold">
+                      {reporte.titulo}
+                    </h4>
 
                     <p className="truncate text-xs text-slate-400">
                       {reporte.ubicacion}
@@ -177,29 +193,43 @@ export default function Home() {
         </main>
 
         <nav className="fixed bottom-0 left-1/2 z-20 flex w-full max-w-md -translate-x-1/2 items-center justify-around border-t border-white/10 bg-[#06101f]/95 px-3 pb-4 pt-3 backdrop-blur-xl">
-          <button className="flex flex-col items-center gap-1 text-red-500">
+          <button
+            type="button"
+            className="flex flex-col items-center gap-1 text-red-500"
+          >
             <House size={21} fill="currentColor" />
             <span className="text-[10px] font-medium">Inicio</span>
           </button>
 
-          <button className="flex flex-col items-center gap-1 text-slate-500">
+          <button
+            type="button"
+            className="flex flex-col items-center gap-1 text-slate-500"
+          >
             <Map size={21} />
             <span className="text-[10px]">Mapa</span>
           </button>
 
           <button
-            className="-mt-8 flex h-14 w-14 items-center justify-center rounded-full border-4 border-[#06101f] bg-red-500 text-white shadow-lg shadow-red-500/30"
+            type="button"
+            onClick={() => navigate("/reportar")}
             aria-label="Crear reporte"
+            className="-mt-8 flex h-14 w-14 items-center justify-center rounded-full border-4 border-[#06101f] bg-red-500 text-white shadow-lg shadow-red-500/30"
           >
             <Plus size={28} />
           </button>
 
-          <button className="flex flex-col items-center gap-1 text-slate-500">
+          <button
+            type="button"
+            className="flex flex-col items-center gap-1 text-slate-500"
+          >
             <Bell size={21} />
             <span className="text-[10px]">Alertas</span>
           </button>
 
-          <button className="flex flex-col items-center gap-1 text-slate-500">
+          <button
+            type="button"
+            className="flex flex-col items-center gap-1 text-slate-500"
+          >
             <UserRound size={21} />
             <span className="text-[10px]">Perfil</span>
           </button>
