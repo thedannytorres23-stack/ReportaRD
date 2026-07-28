@@ -1,23 +1,27 @@
 import { useState } from "react";
 import {
   Bell,
-  Construction,
   House,
+  Image,
   Lightbulb,
   LogOut,
   Map,
+  MapPin,
   Menu,
   MoreHorizontal,
+  PenLine,
   Plus,
   Trash2,
   UserRound,
+  Wrench,
 } from "lucide-react";
 import { useNavigate } from "react-router";
+import ReportCard from "../components/ReportCard";
 
 const categorias = [
   {
     nombre: "Infraestructura",
-    icono: Construction,
+    icono: Wrench,
     color: "bg-red-500/15 text-red-400",
   },
   {
@@ -40,19 +44,37 @@ const categorias = [
 const reportes = [
   {
     id: 1,
-    titulo: "Hueco en la vía",
-    ubicacion: "Av. Estrella Sadhalá, Santiago",
+    autor: "Laura Méndez",
+    iniciales: "LM",
+    verificado: true,
+    comunidad: "Santiago Centro",
     tiempo: "Hace 15 min",
+    categoria: "Infraestructura",
+    estado: "Pendiente",
+    titulo: "Hueco peligroso en la avenida",
+    descripcion:
+      "Este hueco lleva más de una semana causando problemas a los conductores. Durante la noche es difícil verlo y puede provocar un accidente.",
+    ubicacion: "Av. Estrella Sadhalá, Santiago",
     confirmaciones: 32,
-    color: "bg-red-500",
+    comentarios: 8,
+    compartidos: 12,
   },
   {
     id: 2,
-    titulo: "Semáforo averiado",
-    ubicacion: "Calle Duarte, Santiago",
+    autor: "Carlos Rodríguez",
+    iniciales: "CR",
+    verificado: false,
+    comunidad: "Los Jardines",
     tiempo: "Hace 32 min",
+    categoria: "Alumbrado",
+    estado: "En revisión",
+    titulo: "Poste de luz averiado",
+    descripcion:
+      "La calle lleva varios días completamente oscura. Los residentes del sector solicitamos que sea revisado lo antes posible.",
+    ubicacion: "Calle Duarte, Santiago",
     confirmaciones: 18,
-    color: "bg-amber-500",
+    comentarios: 5,
+    compartidos: 7,
   },
 ];
 
@@ -70,13 +92,13 @@ export default function Home({ onLogout }) {
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <div className="mx-auto min-h-screen max-w-md border-x border-white/5 bg-[#06101f] pb-24">
-        <header className="flex items-center justify-between px-5 pb-5 pt-6">
+        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-white/5 bg-[#06101f]/95 px-5 py-4 backdrop-blur-xl">
           <button
             type="button"
             aria-label="Abrir menú"
             className="rounded-xl p-2 text-slate-300 transition hover:bg-white/5"
           >
-            <Menu size={25} />
+            <Menu size={24} />
           </button>
 
           <h1 className="text-xl font-bold">
@@ -89,7 +111,7 @@ export default function Home({ onLogout }) {
               aria-label="Ver notificaciones"
               className="relative rounded-xl p-2 text-slate-300 transition hover:bg-white/5"
             >
-              <Bell size={23} />
+              <Bell size={22} />
 
               <span className="absolute right-2 top-1 h-2 w-2 rounded-full bg-red-500" />
             </button>
@@ -100,59 +122,126 @@ export default function Home({ onLogout }) {
               aria-label="Cerrar sesión"
               className="rounded-xl p-2 text-slate-400 transition hover:bg-white/5 hover:text-red-400"
             >
-              <LogOut size={21} />
+              <LogOut size={20} />
             </button>
           </div>
         </header>
 
-        <main className="px-5">
-          <section>
-            <p className="text-lg font-semibold text-slate-300">
+        <main>
+          <section className="px-5 pb-5 pt-6">
+            <p className="text-sm font-medium text-slate-400">
               ¡Hola, Danny! 👋
             </p>
 
-            <h2 className="mt-1 max-w-xs text-3xl font-bold leading-tight">
-              ¿Qué sucede en tu comunidad hoy?
+            <h2 className="mt-1 text-2xl font-bold">
+              Tu comunidad hoy
             </h2>
-
-            <button
-              type="button"
-              onClick={() => navigate("/reportar")}
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-red-500 px-5 py-4 font-semibold shadow-lg shadow-red-500/20 transition active:scale-[0.98]"
-            >
-              <Plus size={21} strokeWidth={3} />
-              Reportar problema
-            </button>
           </section>
 
-          <section className="mt-6 grid grid-cols-4 gap-3">
-            {categorias.map(({ nombre, icono: Icono, color }) => (
+          <section className="mx-5 rounded-3xl border border-white/10 bg-white/[0.035] p-4">
+            <div className="flex items-center gap-3">
               <button
                 type="button"
-                key={nombre}
-                className="flex min-w-0 flex-col items-center gap-2"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-red-500 font-bold"
               >
-                <span
-                  className={`flex h-14 w-14 items-center justify-center rounded-full ${color}`}
-                >
-                  <Icono size={24} />
-                </span>
-
-                <span className="w-full truncate text-center text-[11px] text-slate-400">
-                  {nombre}
-                </span>
+                DT
               </button>
-            ))}
+
+              <button
+                type="button"
+                className="flex-1 rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-left text-sm text-slate-500"
+              >
+                Comparte algo con tu comunidad...
+              </button>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                className="flex items-center justify-center gap-2 rounded-2xl bg-white/5 px-4 py-3 text-sm font-medium text-slate-300 transition active:scale-[0.98]"
+              >
+                <PenLine size={18} className="text-blue-400" />
+                Publicar
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate("/reportar")}
+                className="flex items-center justify-center gap-2 rounded-2xl bg-red-500 px-4 py-3 text-sm font-semibold text-white transition active:scale-[0.98]"
+              >
+                <Plus size={18} />
+                Reportar
+              </button>
+            </div>
+
+            <div className="mt-3 flex justify-center">
+              <button
+                type="button"
+                className="flex items-center gap-2 text-xs text-slate-500"
+              >
+                <Image size={16} className="text-green-400" />
+                También puedes agregar fotos o videos
+              </button>
+            </div>
           </section>
 
-          <div className="my-6 h-px bg-white/10" />
+          <section className="px-5 py-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-semibold">
+                Explorar categorías
+              </h2>
 
-          <section>
-            <h3 className="mb-4 text-lg font-semibold">
-              Actividad cerca de ti
-            </h3>
+              <button
+                type="button"
+                className="text-xs font-medium text-red-400"
+              >
+                Ver todas
+              </button>
+            </div>
 
-            <div className="relative h-48 overflow-hidden rounded-2xl border border-blue-400/10 bg-[#0b2138]">
+            <div className="grid grid-cols-4 gap-3">
+              {categorias.map(({ nombre, icono: Icono, color }) => (
+                <button
+                  type="button"
+                  key={nombre}
+                  className="flex min-w-0 flex-col items-center gap-2"
+                >
+                  <span
+                    className={`flex h-13 w-13 items-center justify-center rounded-full ${color}`}
+                  >
+                    <Icono size={22} />
+                  </span>
+
+                  <span className="w-full truncate text-center text-[10px] text-slate-400">
+                    {nombre}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="px-5 pb-7">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h2 className="font-semibold">
+                  Actividad cerca de ti
+                </h2>
+
+                <p className="mt-1 text-xs text-slate-500">
+                  Reportes recientes en Santiago
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="flex items-center gap-1 text-xs font-medium text-red-400"
+              >
+                <MapPin size={15} />
+                Abrir mapa
+              </button>
+            </div>
+
+            <div className="relative h-40 overflow-hidden rounded-2xl border border-blue-400/10 bg-[#0b2138]">
               <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(#3b82f6_1px,transparent_1px),linear-gradient(90deg,#3b82f6_1px,transparent_1px)] [background-size:32px_32px]" />
 
               <span className="absolute left-[20%] top-[55%] h-4 w-4 rounded-full border-4 border-red-300 bg-red-500 shadow-lg shadow-red-500/50" />
@@ -163,51 +252,39 @@ export default function Home({ onLogout }) {
 
               <span className="absolute bottom-[18%] right-[38%] h-4 w-4 rounded-full border-4 border-green-300 bg-green-500 shadow-lg shadow-green-500/50" />
             </div>
+          </section>
 
-            <div className="mt-4 divide-y divide-white/10">
+          <section className="border-t border-white/5 px-5 py-6">
+            <div className="mb-5">
+              <h2 className="text-lg font-bold">
+                Publicaciones recientes
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Actividad de personas y comunidades que sigues
+              </p>
+            </div>
+
+            <div className="space-y-5">
               {reportes.map((reporte) => (
-                <article
+                <ReportCard
                   key={reporte.id}
-                  className="flex items-center gap-3 py-4"
-                >
-                  <div className="h-16 w-16 shrink-0 rounded-xl bg-slate-800">
-                    <div className="flex h-full items-center justify-center text-slate-500">
-                      <Construction size={24} />
-                    </div>
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <h4 className="font-semibold">
-                      {reporte.titulo}
-                    </h4>
-
-                    <p className="truncate text-xs text-slate-400">
-                      {reporte.ubicacion}
-                    </p>
-
-                    <p className="mt-1 text-xs text-slate-500">
-                      {reporte.tiempo}
-                    </p>
-                  </div>
-
-                  <span
-                    className={`${reporte.color} rounded-lg px-2.5 py-1 text-xs font-bold`}
-                  >
-                    {reporte.confirmaciones}
-                  </span>
-                </article>
+                  reporte={reporte}
+                />
               ))}
             </div>
           </section>
         </main>
 
-        <nav className="fixed bottom-0 left-1/2 z-20 flex w-full max-w-md -translate-x-1/2 items-center justify-around border-t border-white/10 bg-[#06101f]/95 px-3 pb-4 pt-3 backdrop-blur-xl">
+        <nav className="fixed bottom-0 left-1/2 z-30 flex w-full max-w-md -translate-x-1/2 items-center justify-around border-t border-white/10 bg-[#06101f]/95 px-3 pb-4 pt-3 backdrop-blur-xl">
           <button
             type="button"
             className="flex flex-col items-center gap-1 text-red-500"
           >
             <House size={21} fill="currentColor" />
-            <span className="text-[10px] font-medium">Inicio</span>
+            <span className="text-[10px] font-medium">
+              Inicio
+            </span>
           </button>
 
           <button
@@ -215,7 +292,9 @@ export default function Home({ onLogout }) {
             className="flex flex-col items-center gap-1 text-slate-500"
           >
             <Map size={21} />
-            <span className="text-[10px]">Mapa</span>
+            <span className="text-[10px]">
+              Mapa
+            </span>
           </button>
 
           <button
@@ -232,7 +311,9 @@ export default function Home({ onLogout }) {
             className="flex flex-col items-center gap-1 text-slate-500"
           >
             <Bell size={21} />
-            <span className="text-[10px]">Alertas</span>
+            <span className="text-[10px]">
+              Alertas
+            </span>
           </button>
 
           <button
@@ -240,7 +321,9 @@ export default function Home({ onLogout }) {
             className="flex flex-col items-center gap-1 text-slate-500"
           >
             <UserRound size={21} />
-            <span className="text-[10px]">Perfil</span>
+            <span className="text-[10px]">
+              Perfil
+            </span>
           </button>
         </nav>
       </div>
