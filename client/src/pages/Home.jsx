@@ -148,6 +148,7 @@ export default function Home({ onLogout }) {
               </button>
 
               <button
+              onClick={() => navigate("/publicar")}
                 type="button"
                 className="flex-1 rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-left text-sm text-slate-500"
               >
@@ -158,6 +159,7 @@ export default function Home({ onLogout }) {
             <div className="mt-4 grid grid-cols-2 gap-3">
               <button
                 type="button"
+                onClick={() => navigate("/publicar")}
                 className="flex items-center justify-center gap-2 rounded-2xl bg-white/5 px-4 py-3 text-sm font-medium text-slate-300 transition active:scale-[0.98]"
               >
                 <PenLine size={18} className="text-blue-400" />

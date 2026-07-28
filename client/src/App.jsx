@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Home from "./pages/Home";
+import CreatePost from "./pages/CreatePost";
 import CreateReport from "./pages/CreateReport";
 
 export default function App() {
@@ -34,6 +35,17 @@ export default function App() {
       />
 
       <Route
+        path="/registro"
+        element={
+          autenticado ? (
+            <Navigate to="/" replace />
+          ) : (
+            <Register onRegister={autenticarUsuario} />
+          )
+        }
+      />
+
+      <Route
         path="/"
         element={
           autenticado ? (
@@ -45,9 +57,13 @@ export default function App() {
       />
 
       <Route
-        path="/"
+        path="/publicar"
         element={
-          autenticado ? <Home /> : <Navigate to="/login" replace />
+          autenticado ? (
+            <CreatePost />
+          ) : (
+            <Navigate to="/login" replace />
+          )
         }
       />
 
