@@ -5,6 +5,7 @@ import Register from "./pages/Register";
 import Home from "./pages/Home";
 import CreatePost from "./pages/CreatePost";
 import CreateReport from "./pages/CreateReport";
+import Profile from "./pages/Profile";
 
 export default function App() {
   const [autenticado, setAutenticado] = useState(() => {
@@ -77,6 +78,19 @@ export default function App() {
           )
         }
       />
+      
+
+      <Route
+        path="/perfil"
+        element={
+          autenticado ? (
+            <Profile />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+
 
       <Route
         path="*"

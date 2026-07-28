@@ -16,6 +16,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { useNavigate } from "react-router";
+import PostCard from "../components/PostCard";
 import ReportCard from "../components/ReportCard";
 
 const categorias = [
@@ -41,40 +42,86 @@ const categorias = [
   },
 ];
 
-const reportes = [
+const contenidoFeed = [
   {
-    id: 1,
-    autor: "Laura Méndez",
-    iniciales: "LM",
-    verificado: true,
-    comunidad: "Santiago Centro",
-    tiempo: "Hace 15 min",
-    categoria: "Infraestructura",
-    estado: "Pendiente",
-    titulo: "Hueco peligroso en la avenida",
-    descripcion:
-      "Este hueco lleva más de una semana causando problemas a los conductores. Durante la noche es difícil verlo y puede provocar un accidente.",
-    ubicacion: "Av. Estrella Sadhalá, Santiago",
-    confirmaciones: 32,
-    comentarios: 8,
-    compartidos: 12,
+    id: "post-1",
+    tipo: "publicacion",
+    datos: {
+      id: "post-1",
+      autor: "María Fernández",
+      iniciales: "MF",
+      verificado: true,
+      comunidad: "Los Jardines",
+      tiempo: "Hace 8 min",
+      contenido:
+        "Este sábado estaremos realizando una jornada de limpieza en el parque del sector. Todos los vecinos están invitados. 🇩🇴",
+      mediaUrl: null,
+      mediaTipo: null,
+      reacciones: 24,
+      comentarios: 6,
+      compartidos: 4,
+    },
   },
   {
-    id: 2,
-    autor: "Carlos Rodríguez",
-    iniciales: "CR",
-    verificado: false,
-    comunidad: "Los Jardines",
-    tiempo: "Hace 32 min",
-    categoria: "Alumbrado",
-    estado: "En revisión",
-    titulo: "Poste de luz averiado",
-    descripcion:
-      "La calle lleva varios días completamente oscura. Los residentes del sector solicitamos que sea revisado lo antes posible.",
-    ubicacion: "Calle Duarte, Santiago",
-    confirmaciones: 18,
-    comentarios: 5,
-    compartidos: 7,
+    id: "report-1",
+    tipo: "reporte",
+    datos: {
+      id: "report-1",
+      autor: "Laura Méndez",
+      iniciales: "LM",
+      verificado: true,
+      comunidad: "Santiago Centro",
+      tiempo: "Hace 15 min",
+      categoria: "Infraestructura",
+      estado: "Pendiente",
+      titulo: "Hueco peligroso en la avenida",
+      descripcion:
+        "Este hueco lleva más de una semana causando problemas a los conductores. Durante la noche es difícil verlo y puede provocar un accidente.",
+      ubicacion: "Av. Estrella Sadhalá, Santiago",
+      confirmaciones: 32,
+      comentarios: 8,
+      compartidos: 12,
+    },
+  },
+  {
+    id: "post-2",
+    tipo: "publicacion",
+    datos: {
+      id: "post-2",
+      autor: "José Martínez",
+      iniciales: "JM",
+      verificado: false,
+      comunidad: "Cienfuegos",
+      tiempo: "Hace 26 min",
+      contenido:
+        "Gracias a todos los vecinos que ayudaron a recuperar el área verde. Cuando una comunidad se organiza, los cambios sí se notan.",
+      mediaUrl: null,
+      mediaTipo: null,
+      reacciones: 41,
+      comentarios: 11,
+      compartidos: 9,
+    },
+  },
+  {
+    id: "report-2",
+    tipo: "reporte",
+    datos: {
+      id: "report-2",
+      autor: "Carlos Rodríguez",
+      iniciales: "CR",
+      verificado: false,
+      comunidad: "Los Jardines",
+      tiempo: "Hace 32 min",
+      categoria: "Alumbrado",
+      estado: "En revisión",
+      titulo: "Poste de luz averiado",
+      descripcion:
+        "La calle lleva varios días completamente oscura. Los residentes solicitamos que sea revisado lo antes posible.",
+      ubicacion: "Calle Duarte, Santiago",
+      confirmaciones: 18,
+      comentarios: 5,
+      compartidos: 7,
+    },
   },
 ];
 
@@ -148,8 +195,8 @@ export default function Home({ onLogout }) {
               </button>
 
               <button
-              onClick={() => navigate("/publicar")}
                 type="button"
+                onClick={() => navigate("/publicar")}
                 className="flex-1 rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-left text-sm text-slate-500"
               >
                 Comparte algo con tu comunidad...
@@ -179,10 +226,11 @@ export default function Home({ onLogout }) {
             <div className="mt-3 flex justify-center">
               <button
                 type="button"
+                onClick={() => navigate("/publicar")}
                 className="flex items-center gap-2 text-xs text-slate-500"
               >
                 <Image size={16} className="text-green-400" />
-                También puedes agregar fotos o videos
+                Agregar fotos o videos
               </button>
             </div>
           </section>
@@ -209,7 +257,7 @@ export default function Home({ onLogout }) {
                   className="flex min-w-0 flex-col items-center gap-2"
                 >
                   <span
-                    className={`flex h-13 w-13 items-center justify-center rounded-full ${color}`}
+                    className={`flex h-14 w-14 items-center justify-center rounded-full ${color}`}
                   >
                     <Icono size={22} />
                   </span>
@@ -259,21 +307,28 @@ export default function Home({ onLogout }) {
           <section className="border-t border-white/5 px-5 py-6">
             <div className="mb-5">
               <h2 className="text-lg font-bold">
-                Publicaciones recientes
+                Tu feed
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                Actividad de personas y comunidades que sigues
+                Publicaciones, reportes y comunidades que sigues
               </p>
             </div>
 
             <div className="space-y-5">
-              {reportes.map((reporte) => (
-                <ReportCard
-                  key={reporte.id}
-                  reporte={reporte}
-                />
-              ))}
+              {contenidoFeed.map((elemento) =>
+                elemento.tipo === "reporte" ? (
+                  <ReportCard
+                    key={elemento.id}
+                    reporte={elemento.datos}
+                  />
+                ) : (
+                  <PostCard
+                    key={elemento.id}
+                    publicacion={elemento.datos}
+                  />
+                ),
+              )}
             </div>
           </section>
         </main>
@@ -320,6 +375,7 @@ export default function Home({ onLogout }) {
 
           <button
             type="button"
+            onClick={() => navigate("/perfil")}
             className="flex flex-col items-center gap-1 text-slate-500"
           >
             <UserRound size={21} />
