@@ -159,6 +159,7 @@ export default function Home({ onLogout }) {
           <div className="flex items-center">
             <button
               type="button"
+              onClick={() => navigate("/notificaciones")}
               aria-label="Ver notificaciones"
               className="relative rounded-xl p-2 text-slate-300 transition hover:bg-white/5"
             >
@@ -369,6 +370,7 @@ export default function Home({ onLogout }) {
 
           <button
             type="button"
+            onClick={() => navigate("/notificaciones")}
             className="flex flex-col items-center gap-1 text-slate-500"
           >
             <Bell size={21} />
