@@ -18,6 +18,7 @@ import {
 import { useNavigate } from "react-router";
 import PostCard from "../components/PostCard";
 import ReportCard from "../components/ReportCard";
+import SideMenu from "../components/SideMenu";
 
 const categorias = [
   {
@@ -128,6 +129,8 @@ const contenidoFeed = [
 export default function Home({ onLogout }) {
   const navigate = useNavigate();
 
+  const [menuAbierto, setMenuAbierto] = useState(false);
+
   const [mostrarCierreSesion, setMostrarCierreSesion] =
     useState(false);
 
@@ -142,6 +145,7 @@ export default function Home({ onLogout }) {
         <header className="sticky top-0 z-20 flex items-center justify-between border-b border-white/5 bg-[#06101f]/95 px-5 py-4 backdrop-blur-xl">
           <button
             type="button"
+            onClick={() => setMenuAbierto(true)}
             aria-label="Abrir menú"
             className="rounded-xl p-2 text-slate-300 transition hover:bg-white/5"
           >
@@ -385,6 +389,15 @@ export default function Home({ onLogout }) {
           </button>
         </nav>
       </div>
+
+
+      <SideMenu
+        abierto={menuAbierto}
+        onClose={() => setMenuAbierto(false)}
+        onRequestLogout={() => setMostrarCierreSesion(true)}
+      />
+
+
 
       {mostrarCierreSesion && (
         <div
