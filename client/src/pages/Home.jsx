@@ -248,7 +248,8 @@ export default function Home({ onLogout }) {
 
               <button
                 type="button"
-                className="text-xs font-medium text-red-400"
+                onClick={() => navigate("/mapa")}
+                className="text-xs font-medium text-red-400 transition hover:text-red-300"
               >
                 Ver todas
               </button>
@@ -259,15 +260,25 @@ export default function Home({ onLogout }) {
                 <button
                   type="button"
                   key={nombre}
-                  className="flex min-w-0 flex-col items-center gap-2"
+                  onClick={() => {
+                    if (nombre === "Más") {
+                      navigate("/mapa");
+                      return;
+                    }
+
+                    navigate(
+                      `/mapa?categoria=${encodeURIComponent(nombre)}`,
+                    );
+                  }}
+                  className="group flex min-w-0 flex-col items-center gap-2"
                 >
                   <span
-                    className={`flex h-14 w-14 items-center justify-center rounded-full ${color}`}
+                    className={`flex h-14 w-14 items-center justify-center rounded-full transition duration-200 group-hover:scale-105 group-active:scale-95 ${color}`}
                   >
                     <Icono size={22} />
                   </span>
 
-                  <span className="w-full truncate text-center text-[10px] text-slate-400">
+                  <span className="w-full truncate text-center text-[10px] text-slate-400 transition group-hover:text-white">
                     {nombre}
                   </span>
                 </button>

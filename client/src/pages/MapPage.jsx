@@ -10,7 +10,10 @@ import {
   MapPin,
   Trash2,
 } from "lucide-react";
-import { useNavigate } from "react-router";
+import {
+  useNavigate,
+  useSearchParams,
+} from "react-router";
 import {
   MapContainer,
   Marker,
@@ -162,8 +165,16 @@ function ControladorMapa({ destino }) {
 export default function MapPage() {
   const navigate = useNavigate();
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const categoriaRecibida = searchParams.get("categoria");
+
+  const categoriaInicial = categorias.includes(categoriaRecibida)
+    ? categoriaRecibida
+    : "Todos";
+
   const [categoriaActiva, setCategoriaActiva] =
-    useState("Todos");
+    useState(categoriaInicial);
 
   const [vista, setVista] = useState("mapa");
 
@@ -190,10 +201,18 @@ export default function MapPage() {
       (reporte) => reporte.categoria === categoriaActiva,
     );
   }, [categoriaActiva]);
-
+  
   const seleccionarCategoria = (categoria) => {
     setCategoriaActiva(categoria);
     setReporteSeleccionado(null);
+
+    if (categoria === "Todos") {
+      setSearchParams({});
+    } else {
+      setSearchParams({
+        categoria,
+      });
+    }
   };
 
   const seleccionarReporte = (reporte) => {
@@ -275,11 +294,10 @@ export default function MapPage() {
               onClick={ubicarUsuario}
               disabled={buscandoUbicacion}
               aria-label="Usar mi ubicación"
-              className={`rounded-xl p-2 text-blue-400 hover:bg-blue-500/10 ${
-                buscandoUbicacion
-                  ? "animate-pulse opacity-60"
-                  : ""
-              }`}
+              className={`rounded-xl p-2 text-blue-400 hover:bg-blue-500/10 ${buscandoUbicacion
+                ? "animate-pulse opacity-60"
+                : ""
+                }`}
             >
               <LocateFixed size={22} />
             </button>
@@ -293,11 +311,10 @@ export default function MapPage() {
                 onClick={() =>
                   seleccionarCategoria(categoria)
                 }
-                className={`shrink-0 rounded-full px-4 py-2 text-xs font-medium ${
-                  categoriaActiva === categoria
-                    ? "bg-red-500 text-white"
-                    : "border border-white/10 bg-white/5 text-slate-400"
-                }`}
+                className={`shrink-0 rounded-full px-4 py-2 text-xs font-medium ${categoriaActiva === categoria
+                  ? "bg-red-500 text-white"
+                  : "border border-white/10 bg-white/5 text-slate-400"
+                  }`}
               >
                 {categoria}
               </button>
@@ -308,11 +325,10 @@ export default function MapPage() {
             <button
               type="button"
               onClick={() => setVista("mapa")}
-              className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm ${
-                vista === "mapa"
-                  ? "bg-white/10 text-white"
-                  : "text-slate-500"
-              }`}
+              className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm ${vista === "mapa"
+                ? "bg-white/10 text-white"
+                : "text-slate-500"
+                }`}
             >
               <MapIcon size={17} />
               Mapa
@@ -321,11 +337,10 @@ export default function MapPage() {
             <button
               type="button"
               onClick={() => setVista("lista")}
-              className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm ${
-                vista === "lista"
-                  ? "bg-white/10 text-white"
-                  : "text-slate-500"
-              }`}
+              className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm ${vista === "lista"
+                ? "bg-white/10 text-white"
+                : "text-slate-500"
+                }`}
             >
               <List size={17} />
               Lista
