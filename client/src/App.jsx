@@ -7,6 +7,7 @@ import CreatePost from "./pages/CreatePost";
 import CreateReport from "./pages/CreateReport";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
+import MapPage from "./pages/MapPage";
 
 export default function App() {
   const [autenticado, setAutenticado] = useState(() => {
@@ -104,6 +105,17 @@ export default function App() {
         }
       />
 
+
+      <Route
+        path="/mapa"
+        element={
+          autenticado ? (
+            <MapPage />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
 
       <Route
         path="*"

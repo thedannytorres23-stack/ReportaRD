@@ -289,6 +289,7 @@ export default function Home({ onLogout }) {
 
               <button
                 type="button"
+                onClick={() => navigate("/mapa")}
                 className="flex items-center gap-1 text-xs font-medium text-red-400"
               >
                 <MapPin size={15} />
@@ -351,6 +352,7 @@ export default function Home({ onLogout }) {
 
           <button
             type="button"
+            onClick={() => navigate("/mapa")}
             className="flex flex-col items-center gap-1 text-slate-500"
           >
             <Map size={21} />
