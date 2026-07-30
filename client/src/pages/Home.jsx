@@ -130,6 +130,36 @@ const contenidoFeed = [
   },
 ];
 
+const perfilInicial = {
+  nombre: "Danny Torres",
+  usuario: "dannytorres",
+  foto: "",
+};
+
+const obtenerPerfilGuardado = () => {
+  try {
+    const datos = localStorage.getItem("reportard_profile");
+
+    return datos
+      ? {
+        ...perfilInicial,
+        ...JSON.parse(datos),
+      }
+      : perfilInicial;
+  } catch {
+    return perfilInicial;
+  }
+};
+
+const obtenerIniciales = (nombre) => {
+  return nombre
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((palabra) => palabra.charAt(0).toUpperCase())
+    .join("");
+};
+
 
 
 
@@ -137,6 +167,13 @@ const contenidoFeed = [
 
 export default function Home({ onLogout }) {
   const navigate = useNavigate();
+
+  const [perfil] = useState(obtenerPerfilGuardado);
+
+  const primerNombre =
+    perfil.nombre.trim().split(/\s+/)[0] || "Usuario";
+
+  const iniciales = obtenerIniciales(perfil.nombre);
 
   const [menuAbierto, setMenuAbierto] = useState(false);
 
@@ -191,7 +228,7 @@ export default function Home({ onLogout }) {
         <main>
           <section className="px-5 pb-5 pt-6">
             <p className="text-sm font-medium text-slate-400">
-              ¡Hola, Danny! 👋
+              ¡Hola, {primerNombre}! 👋
             </p>
 
             <h2 className="mt-1 text-2xl font-bold">
@@ -203,9 +240,19 @@ export default function Home({ onLogout }) {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-red-500 font-bold"
+                onClick={() => navigate("/perfil")}
+                aria-label="Abrir mi perfil"
+                className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-red-500 font-bold"
               >
-                DT
+                {perfil.foto ? (
+                  <img
+                    src={perfil.foto}
+                    alt={`Foto de ${perfil.nombre}`}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  iniciales
+                )}
               </button>
 
               <button
