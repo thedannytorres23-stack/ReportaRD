@@ -6,10 +6,12 @@ import Home from "./pages/Home";
 import CreatePost from "./pages/CreatePost";
 import CreateReport from "./pages/CreateReport";
 import Profile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile";
 import Notifications from "./pages/Notifications";
 import MapPage from "./pages/MapPage";
 import People from "./pages/People";
 import UserProfile from "./pages/UserProfile";
+
 
 export default function App() {
   const [autenticado, setAutenticado] = useState(() => {
@@ -48,7 +50,6 @@ export default function App() {
           )
         }
       />
-
       <Route
         path="/registro"
         element={
@@ -80,6 +81,11 @@ export default function App() {
       <Route
         path="/perfil"
         element={protegerRuta(<Profile />)}
+      />
+
+      <Route
+        path="/editar-perfil"
+        element={protegerRuta(<EditProfile />)}
       />
 
       <Route

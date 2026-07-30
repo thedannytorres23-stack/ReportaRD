@@ -12,6 +12,16 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router";
 
+const perfilInicial = {
+  nombre: "Danny Torres",
+  usuario: "dannytorres",
+  biografia:
+    "Ciudadano de Santiago interesado en la tecnología y en contribuir al desarrollo de su comunidad.",
+  ubicacion: "Santiago, República Dominicana",
+  foto: "",
+  portada: "",
+};
+
 const publicaciones = [
   {
     id: 1,
@@ -39,6 +49,21 @@ const publicaciones = [
   },
 ];
 
+const obtenerPerfilGuardado = () => {
+  try {
+    const datos = localStorage.getItem("reportard_profile");
+
+    return datos
+      ? {
+          ...perfilInicial,
+          ...JSON.parse(datos),
+        }
+      : perfilInicial;
+  } catch {
+    return perfilInicial;
+  }
+};
+
 const obtenerTotalSeguidos = () => {
   try {
     const datos = localStorage.getItem(
@@ -51,13 +76,25 @@ const obtenerTotalSeguidos = () => {
   }
 };
 
+const obtenerIniciales = (nombre) => {
+  const palabras = nombre.trim().split(/\s+/);
+
+  return palabras
+    .slice(0, 2)
+    .map((palabra) => palabra.charAt(0).toUpperCase())
+    .join("");
+};
+
 export default function Profile() {
   const navigate = useNavigate();
+
+  const [perfil] = useState(obtenerPerfilGuardado);
 
   const [seccionActiva, setSeccionActiva] =
     useState("publicaciones");
 
   const totalSeguidos = obtenerTotalSeguidos();
+  const iniciales = obtenerIniciales(perfil.nombre);
 
   const contenidoVisible = publicaciones.filter((elemento) => {
     if (seccionActiva === "publicaciones") {
@@ -74,7 +111,7 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <div className="mx-auto min-h-screen max-w-md border-x border-white/5 bg-[#06101f] pb-10">
-        <header className="absolute left-1/2 top-0 z-20 flex w-full max-w-md -translate-x-1/2 items-center justify-between px-4 py-4">
+        <header className="absolute left-1/2 top-0 z-30 flex w-full max-w-md -translate-x-1/2 items-center justify-between px-4 py-4">
           <button
             type="button"
             onClick={() => navigate("/")}
@@ -94,19 +131,36 @@ export default function Profile() {
         </header>
 
         <section className="relative">
-        <div className="relative h-44 bg-gradient-to-br from-blue-900 via-slate-900 to-red-950">
+          <div className="relative h-44 bg-gradient-to-br from-blue-900 via-slate-900 to-red-950">
+            {perfil.portada && (
+              <img
+                src={perfil.portada}
+                alt="Portada del perfil"
+                className="h-full w-full object-cover"
+              />
+            )}
+
             <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:radial-gradient(circle_at_center,#ffffff_1px,transparent_1px)] [background-size:22px_22px]" />
           </div>
 
           <div className="px-5">
-           <div className="relative z-10 -mt-14 flex items-end justify-between">
-              <div className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-[#06101f] bg-gradient-to-br from-blue-500 to-red-500 text-3xl font-bold shadow-xl">
-                DT
+            <div className="relative z-10 -mt-14 flex items-end justify-between">
+              <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-4 border-[#06101f] bg-gradient-to-br from-blue-500 to-red-500 text-3xl font-bold shadow-xl">
+                {perfil.foto ? (
+                  <img
+                    src={perfil.foto}
+                    alt={`Foto de ${perfil.nombre}`}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  iniciales
+                )}
               </div>
 
               <button
                 type="button"
-                className="mb-2 flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold"
+                onClick={() => navigate("/editar-perfil")}
+                className="mb-2 flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/10"
               >
                 <Pencil size={16} />
                 Editar perfil
@@ -116,7 +170,7 @@ export default function Profile() {
             <div className="mt-4">
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold">
-                  Danny Torres
+                  {perfil.nombre}
                 </h1>
 
                 <CheckCircle2
@@ -128,13 +182,12 @@ export default function Profile() {
               </div>
 
               <p className="mt-1 text-sm text-slate-500">
-                @dannytorres
+                @{perfil.usuario}
               </p>
 
               <p className="mt-4 text-sm leading-6 text-slate-300">
-                Ciudadano de Santiago interesado en la
-                tecnología y en contribuir al desarrollo de su
-                comunidad.
+                {perfil.biografia ||
+                  "Este usuario todavía no ha agregado una biografía."}
               </p>
 
               <div className="mt-3 flex items-center gap-1.5 text-sm text-slate-500">
@@ -143,7 +196,8 @@ export default function Profile() {
                   className="text-red-400"
                 />
 
-                Santiago, República Dominicana
+                {perfil.ubicacion ||
+                  "Ubicación no especificada"}
               </div>
             </div>
 
@@ -166,7 +220,9 @@ export default function Profile() {
 
               <button
                 type="button"
-                onClick={() => navigate("/personas?vista=siguiendo")}
+                onClick={() =>
+                  navigate("/personas?vista=siguiendo")
+                }
                 className="transition hover:text-blue-400"
               >
                 <strong className="block text-lg">
@@ -235,7 +291,6 @@ export default function Profile() {
                 size={16}
                 className="text-green-400"
               />
-
               Verificador
             </div>
 
@@ -244,7 +299,6 @@ export default function Profile() {
                 size={16}
                 className="text-blue-400"
               />
-
               Líder comunitario
             </div>
           </div>
@@ -257,10 +311,11 @@ export default function Profile() {
               onClick={() =>
                 setSeccionActiva("publicaciones")
               }
-              className={`border-b-2 px-2 pb-3 text-sm font-medium ${seccionActiva === "publicaciones"
-                ? "border-red-500 text-white"
-                : "border-transparent text-slate-500"
-                }`}
+              className={`border-b-2 px-2 pb-3 text-sm font-medium ${
+                seccionActiva === "publicaciones"
+                  ? "border-red-500 text-white"
+                  : "border-transparent text-slate-500"
+              }`}
             >
               Publicaciones
             </button>
@@ -268,10 +323,11 @@ export default function Profile() {
             <button
               type="button"
               onClick={() => setSeccionActiva("reportes")}
-              className={`border-b-2 px-2 pb-3 text-sm font-medium ${seccionActiva === "reportes"
-                ? "border-red-500 text-white"
-                : "border-transparent text-slate-500"
-                }`}
+              className={`border-b-2 px-2 pb-3 text-sm font-medium ${
+                seccionActiva === "reportes"
+                  ? "border-red-500 text-white"
+                  : "border-transparent text-slate-500"
+              }`}
             >
               Reportes
             </button>
@@ -279,10 +335,11 @@ export default function Profile() {
             <button
               type="button"
               onClick={() => setSeccionActiva("guardados")}
-              className={`flex items-center justify-center gap-1 border-b-2 px-2 pb-3 text-sm font-medium ${seccionActiva === "guardados"
-                ? "border-red-500 text-white"
-                : "border-transparent text-slate-500"
-                }`}
+              className={`flex items-center justify-center gap-1 border-b-2 px-2 pb-3 text-sm font-medium ${
+                seccionActiva === "guardados"
+                  ? "border-red-500 text-white"
+                  : "border-transparent text-slate-500"
+              }`}
             >
               <Bookmark size={15} />
               Guardados
@@ -314,10 +371,11 @@ export default function Profile() {
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <span
-                        className={`text-xs font-semibold ${elemento.tipo === "reporte"
-                          ? "text-red-400"
-                          : "text-blue-400"
-                          }`}
+                        className={`text-xs font-semibold ${
+                          elemento.tipo === "reporte"
+                            ? "text-red-400"
+                            : "text-blue-400"
+                        }`}
                       >
                         {elemento.tipo === "reporte"
                           ? "REPORTE"
