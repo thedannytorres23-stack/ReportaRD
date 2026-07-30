@@ -9,6 +9,7 @@ import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
 import Notifications from "./pages/Notifications";
 import MapPage from "./pages/MapPage";
+import SearchPage from "./pages/SearchPage";
 import People from "./pages/People";
 import UserProfile from "./pages/UserProfile";
 
@@ -107,6 +108,11 @@ export default function App() {
       <Route
         path="/mapa"
         element={protegerRuta(<MapPage />)}
+      />
+
+      <Route
+        path="/buscar"
+        element={protegerRuta(<SearchPage />)}
       />
 
       <Route

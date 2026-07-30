@@ -11,6 +11,7 @@ import {
   MoreHorizontal,
   PenLine,
   Plus,
+  Search,
   Trash2,
   UserRound,
   Wrench,
@@ -188,52 +189,113 @@ export default function Home({ onLogout }) {
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <div className="mx-auto min-h-screen max-w-md border-x border-white/5 bg-[#06101f] pb-24">
-        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-white/5 bg-[#06101f]/95 px-5 py-4 backdrop-blur-xl">
-          <button
-            type="button"
-            onClick={() => setMenuAbierto(true)}
-            aria-label="Abrir menú"
-            className="rounded-xl p-2 text-slate-300 transition hover:bg-white/5"
-          >
-            <Menu size={24} />
-          </button>
+        <header className="sticky top-0 z-20 border-b border-white/5 bg-[#06101f]/90 px-4 pb-4 pt-3 backdrop-blur-xl">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setMenuAbierto(true)}
+              aria-label="Abrir menú"
+              className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/5 bg-white/[0.035] text-slate-300 transition hover:bg-white/[0.07] active:scale-95"
+            >
+              <Menu size={22} />
+            </button>
 
-          <h1 className="text-xl font-bold">
-            Reporta<span className="text-red-500">RD</span>
-          </h1>
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="text-center"
+            >
+              <h1 className="text-lg font-black tracking-tight">
+                Reporta<span className="text-red-500">RD</span>
+              </h1>
 
-          <div className="flex items-center">
+              <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-slate-600">
+                Red ciudadana
+              </p>
+            </button>
+
             <button
               type="button"
               onClick={() => navigate("/notificaciones")}
               aria-label="Ver notificaciones"
-              className="relative rounded-xl p-2 text-slate-300 transition hover:bg-white/5"
+              className="relative flex h-10 w-10 items-center justify-center rounded-2xl border border-white/5 bg-white/[0.035] text-slate-300 transition hover:bg-white/[0.07] active:scale-95"
             >
-              <Bell size={22} />
+              <Bell size={21} />
 
-              <span className="absolute right-2 top-1 h-2 w-2 rounded-full bg-red-500" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setMostrarCierreSesion(true)}
-              aria-label="Cerrar sesión"
-              className="rounded-xl p-2 text-slate-400 transition hover:bg-white/5 hover:text-red-400"
-            >
-              <LogOut size={20} />
+              <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full border-2 border-[#06101f] bg-red-500" />
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={() => navigate("/buscar")}
+            className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3 text-left transition hover:border-blue-500/30 hover:bg-white/[0.06]"
+          >
+            <Search
+              size={18}
+              className="shrink-0 text-blue-400"
+            />
+
+            <span className="min-w-0 flex-1 truncate text-sm text-slate-500">
+              Buscar personas, publicaciones o reportes
+            </span>
+
+            <span className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[9px] font-semibold uppercase tracking-wider text-slate-600">
+              Buscar
+            </span>
+          </button>
         </header>
 
         <main>
-          <section className="px-5 pb-5 pt-6">
-            <p className="text-sm font-medium text-slate-400">
-              ¡Hola, {primerNombre}! 👋
-            </p>
+          <section className="px-5 pb-5 pt-5">
+            <div className="relative overflow-hidden rounded-3xl border border-blue-500/15 bg-gradient-to-br from-blue-500/10 via-[#0b1626] to-red-500/10 p-5">
+              <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-blue-500/10 blur-3xl" />
 
-            <h2 className="mt-1 text-2xl font-bold">
-              Tu comunidad hoy
-            </h2>
+              <div className="pointer-events-none absolute -bottom-16 -left-12 h-36 w-36 rounded-full bg-red-500/10 blur-3xl" />
+
+              <div className="relative">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium text-slate-400">
+                    ¡Hola, {primerNombre}! 👋
+                  </p>
+
+                  <span className="flex shrink-0 items-center gap-1 rounded-full border border-white/5 bg-white/5 px-2.5 py-1 text-[10px] text-slate-400">
+                    <MapPin
+                      size={12}
+                      className="text-red-400"
+                    />
+                    Santiago
+                  </span>
+                </div>
+
+                <div className="mt-3 flex items-end gap-4">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="max-w-xs text-2xl font-bold leading-tight">
+                      ¿Qué está pasando en tu comunidad?
+                    </h2>
+
+                    <p className="mt-2 max-w-sm text-xs leading-5 text-slate-500">
+                      Descubre, participa y ayuda a generar cambios cerca de ti.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => navigate("/mapa")}
+                    aria-label="Explorar actividad cercana"
+                    className="group relative mb-1 flex h-14 w-14 shrink-0 items-center justify-center"
+                  >
+                    <span className="absolute h-12 w-12 animate-ping rounded-full bg-red-500/15 [animation-duration:2.4s]" />
+
+                    <span className="absolute h-14 w-14 rounded-full border border-red-400/15 bg-red-500/5 transition duration-300 group-hover:scale-110 group-hover:bg-red-500/10" />
+
+                    <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg shadow-red-500/25 transition duration-300 group-hover:-translate-y-0.5">
+                      <MapPin size={19} fill="currentColor" />
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </section>
 
           <section className="mx-5 rounded-3xl border border-white/10 bg-white/[0.035] p-4">

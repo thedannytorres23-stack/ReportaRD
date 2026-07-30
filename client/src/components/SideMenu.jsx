@@ -9,6 +9,40 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router";
 
+
+const perfilInicial = {
+    nombre: "Danny Torres",
+    usuario: "dannytorres",
+    foto: "",
+};
+
+const obtenerPerfilGuardado = () => {
+    try {
+        const datos = localStorage.getItem("reportard_profile");
+
+        return datos
+            ? {
+                ...perfilInicial,
+                ...JSON.parse(datos),
+            }
+            : perfilInicial;
+    } catch {
+        return perfilInicial;
+    }
+};
+
+const obtenerIniciales = (nombre) => {
+    return nombre
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((palabra) => palabra.charAt(0).toUpperCase())
+        .join("");
+};
+
+const perfil = obtenerPerfilGuardado();
+const iniciales = obtenerIniciales(perfil.nombre);
+
 export default function SideMenu({
     abierto,
     onClose,
@@ -45,17 +79,25 @@ export default function SideMenu({
                             onClick={() => navegar("/perfil")}
                             className="flex min-w-0 items-center gap-3 text-left"
                         >
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-red-500 font-bold">
-                                DT
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-red-500 font-bold">
+                                {perfil.foto ? (
+                                    <img
+                                        src={perfil.foto}
+                                        alt={`Foto de ${perfil.nombre}`}
+                                        className="h-full w-full object-cover"
+                                    />
+                                ) : (
+                                    iniciales
+                                )}
                             </div>
 
                             <div className="min-w-0">
                                 <h2 className="truncate font-semibold">
-                                    Danny Torres
+                                    {perfil.nombre}
                                 </h2>
 
                                 <p className="truncate text-xs text-slate-500">
-                                    @dannytorres
+                                    @{perfil.usuario}
                                 </p>
                             </div>
                         </button>
