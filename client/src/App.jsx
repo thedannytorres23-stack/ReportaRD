@@ -8,10 +8,13 @@ import CreateReport from "./pages/CreateReport";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import MapPage from "./pages/MapPage";
+import People from "./pages/People";
 
 export default function App() {
   const [autenticado, setAutenticado] = useState(() => {
-    return localStorage.getItem("reportard_session") === "true";
+    return (
+      localStorage.getItem("reportard_session") === "true"
+    );
   });
 
   const autenticarUsuario = () => {
@@ -22,6 +25,14 @@ export default function App() {
   const cerrarSesion = () => {
     localStorage.removeItem("reportard_session");
     setAutenticado(false);
+  };
+
+  const protegerRuta = (componente) => {
+    return autenticado ? (
+      componente
+    ) : (
+      <Navigate to="/login" replace />
+    );
   };
 
   return (
@@ -50,77 +61,48 @@ export default function App() {
 
       <Route
         path="/"
-        element={
-          autenticado ? (
-            <Home onLogout={cerrarSesion} />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
+        element={protegerRuta(
+          <Home onLogout={cerrarSesion} />,
+        )}
       />
 
       <Route
         path="/publicar"
-        element={
-          autenticado ? (
-            <CreatePost />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
+        element={protegerRuta(<CreatePost />)}
       />
 
       <Route
         path="/reportar"
-        element={
-          autenticado ? (
-            <CreateReport />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
+        element={protegerRuta(<CreateReport />)}
       />
-
 
       <Route
         path="/perfil"
-        element={
-          autenticado ? (
-            <Profile />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
+        element={protegerRuta(<Profile />)}
       />
 
+      <Route
+        path="/personas"
+        element={protegerRuta(<People />)}
+      />
 
       <Route
         path="/notificaciones"
-        element={
-          autenticado ? (
-            <Notifications />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
+        element={protegerRuta(<Notifications />)}
       />
-
 
       <Route
         path="/mapa"
-        element={
-          autenticado ? (
-            <MapPage />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
+        element={protegerRuta(<MapPage />)}
       />
 
       <Route
         path="*"
         element={
-          <Navigate to={autenticado ? "/" : "/login"} replace />
+          <Navigate
+            to={autenticado ? "/" : "/login"}
+            replace
+          />
         }
       />
     </Routes>

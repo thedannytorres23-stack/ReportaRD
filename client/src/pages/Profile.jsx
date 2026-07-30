@@ -39,12 +39,31 @@ const publicaciones = [
   },
 ];
 
+const obtenerTotalSeguidos = () => {
+  try {
+    const datos = localStorage.getItem(
+      "reportard_usuarios_seguidos",
+    );
+
+    return datos ? JSON.parse(datos).length : 0;
+  } catch {
+    return 0;
+  }
+};
+
 export default function Profile() {
   const navigate = useNavigate();
-  const [seccionActiva, setSeccionActiva] = useState("publicaciones");
+
+  const [seccionActiva, setSeccionActiva] =
+    useState("publicaciones");
+
+  const totalSeguidos = obtenerTotalSeguidos();
 
   const contenidoVisible = publicaciones.filter((elemento) => {
-    if (seccionActiva === "publicaciones") return true;
+    if (seccionActiva === "publicaciones") {
+      return true;
+    }
+
     if (seccionActiva === "reportes") {
       return elemento.tipo === "reporte";
     }
@@ -75,12 +94,12 @@ export default function Profile() {
         </header>
 
         <section className="relative">
-          <div className="h-44 bg-gradient-to-br from-blue-900 via-slate-900 to-red-950">
-            <div className="absolute inset-0 opacity-20 [background-image:radial-gradient(circle_at_center,#ffffff_1px,transparent_1px)] [background-size:22px_22px]" />
+        <div className="relative h-44 bg-gradient-to-br from-blue-900 via-slate-900 to-red-950">
+            <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:radial-gradient(circle_at_center,#ffffff_1px,transparent_1px)] [background-size:22px_22px]" />
           </div>
 
           <div className="px-5">
-            <div className="-mt-14 flex items-end justify-between">
+           <div className="relative z-10 -mt-14 flex items-end justify-between">
               <div className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-[#06101f] bg-gradient-to-br from-blue-500 to-red-500 text-3xl font-bold shadow-xl">
                 DT
               </div>
@@ -113,34 +132,68 @@ export default function Profile() {
               </p>
 
               <p className="mt-4 text-sm leading-6 text-slate-300">
-                Ciudadano de Santiago interesado en la tecnología y en
-                contribuir al desarrollo de su comunidad.
+                Ciudadano de Santiago interesado en la
+                tecnología y en contribuir al desarrollo de su
+                comunidad.
               </p>
 
               <div className="mt-3 flex items-center gap-1.5 text-sm text-slate-500">
-                <MapPin size={16} className="text-red-400" />
+                <MapPin
+                  size={16}
+                  className="text-red-400"
+                />
+
                 Santiago, República Dominicana
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-3 divide-x divide-white/10 rounded-2xl border border-white/10 bg-white/[0.035] py-4 text-center">
-              <button type="button">
-                <strong className="block text-lg">128</strong>
-                <span className="text-xs text-slate-500">
-                  Amigos
+            <div className="mt-6 grid grid-cols-4 divide-x divide-white/10 rounded-2xl border border-white/10 bg-white/[0.035] py-4 text-center">
+              <button
+                type="button"
+                onClick={() =>
+                  navigate("/personas?vista=seguidores")
+                }
+                className="transition hover:text-blue-400"
+              >
+                <strong className="block text-lg">
+                  128
+                </strong>
+
+                <span className="text-[10px] text-slate-500">
+                  Seguidores
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate("/personas?vista=siguiendo")}
+                className="transition hover:text-blue-400"
+              >
+                <strong className="block text-lg">
+                  {totalSeguidos}
+                </strong>
+
+                <span className="text-[10px] text-slate-500">
+                  Siguiendo
                 </span>
               </button>
 
               <button type="button">
-                <strong className="block text-lg">6</strong>
-                <span className="text-xs text-slate-500">
+                <strong className="block text-lg">
+                  6
+                </strong>
+
+                <span className="text-[10px] text-slate-500">
                   Comunidades
                 </span>
               </button>
 
               <button type="button">
-                <strong className="block text-lg">14</strong>
-                <span className="text-xs text-slate-500">
+                <strong className="block text-lg">
+                  14
+                </strong>
+
+                <span className="text-[10px] text-slate-500">
                   Reportes
                 </span>
               </button>
@@ -178,12 +231,20 @@ export default function Profile() {
 
           <div className="mt-5 flex gap-3">
             <div className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 text-xs text-slate-300">
-              <ShieldCheck size={16} className="text-green-400" />
+              <ShieldCheck
+                size={16}
+                className="text-green-400"
+              />
+
               Verificador
             </div>
 
             <div className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 text-xs text-slate-300">
-              <Users size={16} className="text-blue-400" />
+              <Users
+                size={16}
+                className="text-blue-400"
+              />
+
               Líder comunitario
             </div>
           </div>
@@ -193,12 +254,13 @@ export default function Profile() {
           <nav className="grid grid-cols-3 border-b border-white/10 px-5">
             <button
               type="button"
-              onClick={() => setSeccionActiva("publicaciones")}
-              className={`border-b-2 px-2 pb-3 text-sm font-medium ${
-                seccionActiva === "publicaciones"
-                  ? "border-red-500 text-white"
-                  : "border-transparent text-slate-500"
-              }`}
+              onClick={() =>
+                setSeccionActiva("publicaciones")
+              }
+              className={`border-b-2 px-2 pb-3 text-sm font-medium ${seccionActiva === "publicaciones"
+                ? "border-red-500 text-white"
+                : "border-transparent text-slate-500"
+                }`}
             >
               Publicaciones
             </button>
@@ -206,11 +268,10 @@ export default function Profile() {
             <button
               type="button"
               onClick={() => setSeccionActiva("reportes")}
-              className={`border-b-2 px-2 pb-3 text-sm font-medium ${
-                seccionActiva === "reportes"
-                  ? "border-red-500 text-white"
-                  : "border-transparent text-slate-500"
-              }`}
+              className={`border-b-2 px-2 pb-3 text-sm font-medium ${seccionActiva === "reportes"
+                ? "border-red-500 text-white"
+                : "border-transparent text-slate-500"
+                }`}
             >
               Reportes
             </button>
@@ -218,11 +279,10 @@ export default function Profile() {
             <button
               type="button"
               onClick={() => setSeccionActiva("guardados")}
-              className={`flex items-center justify-center gap-1 border-b-2 px-2 pb-3 text-sm font-medium ${
-                seccionActiva === "guardados"
-                  ? "border-red-500 text-white"
-                  : "border-transparent text-slate-500"
-              }`}
+              className={`flex items-center justify-center gap-1 border-b-2 px-2 pb-3 text-sm font-medium ${seccionActiva === "guardados"
+                ? "border-red-500 text-white"
+                : "border-transparent text-slate-500"
+                }`}
             >
               <Bookmark size={15} />
               Guardados
@@ -254,11 +314,10 @@ export default function Profile() {
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <span
-                        className={`text-xs font-semibold ${
-                          elemento.tipo === "reporte"
-                            ? "text-red-400"
-                            : "text-blue-400"
-                        }`}
+                        className={`text-xs font-semibold ${elemento.tipo === "reporte"
+                          ? "text-red-400"
+                          : "text-blue-400"
+                          }`}
                       >
                         {elemento.tipo === "reporte"
                           ? "REPORTE"
@@ -270,7 +329,8 @@ export default function Profile() {
                       </h3>
 
                       <p className="mt-2 text-xs text-slate-500">
-                        {elemento.fecha} · {elemento.interacciones}
+                        {elemento.fecha} ·{" "}
+                        {elemento.interacciones}
                       </p>
                     </div>
 
