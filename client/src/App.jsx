@@ -9,6 +9,7 @@ import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import MapPage from "./pages/MapPage";
 import People from "./pages/People";
+import UserProfile from "./pages/UserProfile";
 
 export default function App() {
   const [autenticado, setAutenticado] = useState(() => {
@@ -84,6 +85,12 @@ export default function App() {
       <Route
         path="/personas"
         element={protegerRuta(<People />)}
+      />
+
+
+      <Route
+        path="/usuario/:id"
+        element={protegerRuta(<UserProfile />)}
       />
 
       <Route
