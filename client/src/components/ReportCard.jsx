@@ -9,12 +9,19 @@ import {
   Send,
   Share2,
 } from "lucide-react";
+import { useNavigate } from "react-router";
 
 export default function ReportCard({ reporte }) {
+  const navigate = useNavigate();
+
+  const abrirPerfil = () => {
+    if (reporte.autorId) {
+      navigate(`/usuario/${reporte.autorId}`);
+    }
+  };
   const claveReporte = useMemo(
     () =>
-      `reportard_report_${
-        reporte.id ?? `${reporte.autor}_${reporte.tiempo}`
+      `reportard_report_${reporte.id ?? `${reporte.autor}_${reporte.tiempo}`
       }`,
     [reporte],
   );
@@ -185,16 +192,22 @@ export default function ReportCard({ reporte }) {
       <header className="flex items-start gap-3 p-4">
         <button
           type="button"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-red-500 font-bold text-white"
+          onClick={abrirPerfil}
+          aria-label={`Abrir perfil de ${reporte.autor}`}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-red-500 font-bold text-white transition hover:scale-105 active:scale-95"
         >
           {reporte.iniciales}
         </button>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <h2 className="truncate font-semibold text-white">
+            <button
+              type="button"
+              onClick={abrirPerfil}
+              className="truncate text-left font-semibold text-white hover:underline"
+            >
               {reporte.autor}
-            </h2>
+            </button>
 
             {reporte.verificado && (
               <CheckCircle2
@@ -296,11 +309,10 @@ export default function ReportCard({ reporte }) {
         <button
           type="button"
           onClick={cambiarConfirmacion}
-          className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${
-            confirmado
-              ? "bg-red-500/10 text-red-400"
-              : "text-slate-400 hover:bg-white/5"
-          }`}
+          className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${confirmado
+            ? "bg-red-500/10 text-red-400"
+            : "text-slate-400 hover:bg-white/5"
+            }`}
         >
           <CheckCircle2
             size={21}
@@ -316,11 +328,10 @@ export default function ReportCard({ reporte }) {
               (estadoActual) => !estadoActual,
             )
           }
-          className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${
-            mostrarComentarios
-              ? "bg-blue-500/10 text-blue-400"
-              : "text-slate-400 hover:bg-white/5"
-          }`}
+          className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${mostrarComentarios
+            ? "bg-blue-500/10 text-blue-400"
+            : "text-slate-400 hover:bg-white/5"
+            }`}
         >
           <MessageCircle size={21} />
           Comentar
@@ -346,11 +357,10 @@ export default function ReportCard({ reporte }) {
           onClick={() =>
             setGuardado((estadoActual) => !estadoActual)
           }
-          className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${
-            guardado
-              ? "text-amber-400"
-              : "text-slate-400 hover:bg-white/5"
-          }`}
+          className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${guardado
+            ? "text-amber-400"
+            : "text-slate-400 hover:bg-white/5"
+            }`}
         >
           <Bookmark
             size={21}
@@ -457,39 +467,39 @@ export default function ReportCard({ reporte }) {
 
                       {comentarioRespondiendo ===
                         comentario.id && (
-                        <div className="ml-5 mt-3 flex gap-2">
-                          <input
-                            type="text"
-                            autoFocus
-                            value={nuevaRespuesta}
-                            onChange={(evento) =>
-                              setNuevaRespuesta(
-                                evento.target.value,
-                              )
-                            }
-                            onKeyDown={(evento) => {
-                              if (evento.key === "Enter") {
-                                agregarRespuesta(
-                                  comentario.id,
-                                );
+                          <div className="ml-5 mt-3 flex gap-2">
+                            <input
+                              type="text"
+                              autoFocus
+                              value={nuevaRespuesta}
+                              onChange={(evento) =>
+                                setNuevaRespuesta(
+                                  evento.target.value,
+                                )
                               }
-                            }}
-                            placeholder={`Responder a ${comentario.autor}...`}
-                            className="min-w-0 flex-1 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none"
-                          />
+                              onKeyDown={(evento) => {
+                                if (evento.key === "Enter") {
+                                  agregarRespuesta(
+                                    comentario.id,
+                                  );
+                                }
+                              }}
+                              placeholder={`Responder a ${comentario.autor}...`}
+                              className="min-w-0 flex-1 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none"
+                            />
 
-                          <button
-                            type="button"
-                            onClick={() =>
-                              agregarRespuesta(comentario.id)
-                            }
-                            disabled={!nuevaRespuesta.trim()}
-                            className="rounded-full bg-blue-500 p-2 text-white disabled:opacity-40"
-                          >
-                            <Send size={14} />
-                          </button>
-                        </div>
-                      )}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                agregarRespuesta(comentario.id)
+                              }
+                              disabled={!nuevaRespuesta.trim()}
+                              className="rounded-full bg-blue-500 p-2 text-white disabled:opacity-40"
+                            >
+                              <Send size={14} />
+                            </button>
+                          </div>
+                        )}
                     </div>
                   </div>
                 </article>

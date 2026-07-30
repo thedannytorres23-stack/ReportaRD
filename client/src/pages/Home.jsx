@@ -49,6 +49,7 @@ const contenidoFeed = [
     tipo: "publicacion",
     datos: {
       id: "post-1",
+      autorId: 3,
       autor: "María Fernández",
       iniciales: "MF",
       verificado: true,
@@ -68,6 +69,7 @@ const contenidoFeed = [
     tipo: "reporte",
     datos: {
       id: "report-1",
+      autorId: 1,
       autor: "Laura Méndez",
       iniciales: "LM",
       verificado: true,
@@ -89,6 +91,7 @@ const contenidoFeed = [
     tipo: "publicacion",
     datos: {
       id: "post-2",
+      autorId: 4,
       autor: "José Martínez",
       iniciales: "JM",
       verificado: false,
@@ -108,7 +111,8 @@ const contenidoFeed = [
     tipo: "reporte",
     datos: {
       id: "report-2",
-      autor: "Carlos Rodríguez",
+      autorId: 2,
+      autor: "Carlos Ramírez",
       iniciales: "CR",
       verificado: false,
       comunidad: "Los Jardines",
@@ -125,6 +129,11 @@ const contenidoFeed = [
     },
   },
 ];
+
+
+
+
+
 
 export default function Home({ onLogout }) {
   const navigate = useNavigate();

@@ -9,8 +9,17 @@ import {
   Share2,
   Users,
 } from "lucide-react";
+import { useNavigate } from "react-router";
 
 export default function PostCard({ publicacion }) {
+  const navigate = useNavigate();
+
+  const abrirPerfil = () => {
+    if (publicacion.autorId) {
+      navigate(`/usuario/${publicacion.autorId}`);
+    }
+  };
+
   const clavePublicacion = useMemo(
     () =>
       `reportard_post_${
@@ -209,16 +218,22 @@ export default function PostCard({ publicacion }) {
       <header className="flex items-start gap-3 p-4">
         <button
           type="button"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-blue-500 font-bold text-white"
+          onClick={abrirPerfil}
+          aria-label={`Abrir perfil de ${publicacion.autor}`}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-blue-500 font-bold text-white transition hover:scale-105 active:scale-95"
         >
           {publicacion.iniciales}
         </button>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <h2 className="truncate font-semibold">
+            <button
+              type="button"
+              onClick={abrirPerfil}
+              className="truncate text-left font-semibold hover:underline"
+            >
               {publicacion.autor}
-            </h2>
+            </button>
 
             {publicacion.verificado && (
               <CheckCircle2
@@ -331,7 +346,9 @@ export default function PostCard({ publicacion }) {
         <button
           type="button"
           onClick={() =>
-            setMostrarComentarios((estadoActual) => !estadoActual)
+            setMostrarComentarios(
+              (estadoActual) => !estadoActual,
+            )
           }
           className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${
             mostrarComentarios
@@ -440,6 +457,7 @@ export default function PostCard({ publicacion }) {
                             setComentarioRespondiendo(
                               comentario.id,
                             );
+
                             setNuevaRespuesta("");
                           }}
                           className="font-medium hover:text-blue-400"
@@ -448,26 +466,28 @@ export default function PostCard({ publicacion }) {
                         </button>
                       </div>
 
-                      {comentario.respuestas.map((respuesta) => (
-                        <div
-                          key={respuesta.id}
-                          className="ml-5 mt-3 flex items-start gap-2"
-                        >
-                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-500/20 text-[9px] font-bold text-blue-300">
-                            DT
-                          </div>
+                      {comentario.respuestas.map(
+                        (respuesta) => (
+                          <div
+                            key={respuesta.id}
+                            className="ml-5 mt-3 flex items-start gap-2"
+                          >
+                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-500/20 text-[9px] font-bold text-blue-300">
+                              DT
+                            </div>
 
-                          <div className="rounded-2xl bg-white/5 px-3 py-2">
-                            <p className="text-xs font-semibold">
-                              {respuesta.autor}
-                            </p>
+                            <div className="rounded-2xl bg-white/5 px-3 py-2">
+                              <p className="text-xs font-semibold">
+                                {respuesta.autor}
+                              </p>
 
-                            <p className="mt-1 text-sm text-slate-300">
-                              {respuesta.contenido}
-                            </p>
+                              <p className="mt-1 text-sm text-slate-300">
+                                {respuesta.contenido}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ),
+                      )}
 
                       {comentarioRespondiendo ===
                         comentario.id && (
