@@ -139,8 +139,8 @@ const contenidoFeed = [
 ];
 
 const perfilInicial = {
-  nombre: "Danny Torres",
-  usuario: "dannytorres",
+  nombre: "Usuario de prueba-RD",
+  usuario: "usuario_prueba",
   foto: "",
 };
 

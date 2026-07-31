@@ -65,7 +65,7 @@ export default function Register({ onRegister }) {
       nombre: "nombre",
       tipo: "text",
       etiqueta: "Nombre y apellido",
-      placeholder: "Danny Torres",
+      placeholder: "Tu nombre completo",
       icono: UserRound,
     },
     {
@@ -73,7 +73,7 @@ export default function Register({ onRegister }) {
       nombre: "usuario",
       tipo: "text",
       etiqueta: "Nombre de usuario",
-      placeholder: "dannytorres",
+      placeholder: "Tu nombre de usuario",
       icono: AtSign,
     },
     {
