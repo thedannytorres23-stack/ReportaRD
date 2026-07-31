@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Navigate, Route, Routes } from "react-router";
+import BottomNav from "./components/BottomNav";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Home from "./pages/Home";
@@ -16,12 +17,9 @@ import UserProfile from "./pages/UserProfile";
 import CommunityDetail from "./pages/CommunityDetail";
 import Messages from "./pages/Messages";
 
-
 export default function App() {
   const [autenticado, setAutenticado] = useState(() => {
-    return (
-      localStorage.getItem("reportard_session") === "true"
-    );
+    return localStorage.getItem("reportard_session") === "true";
   });
 
   const autenticarUsuario = () => {
@@ -35,118 +33,103 @@ export default function App() {
   };
 
   const protegerRuta = (componente) => {
-    return autenticado ? (
-      componente
-    ) : (
-      <Navigate to="/login" replace />
-    );
+    return autenticado ? componente : <Navigate to="/login" replace />;
   };
 
   return (
-    <Routes>
-      <Route
-        path="/login"
-        element={
-          autenticado ? (
-            <Navigate to="/" replace />
-          ) : (
-            <Login onLogin={autenticarUsuario} />
-          )
+    <>
+      <div
+        className={
+          autenticado
+            ? "min-h-screen bg-slate-950 pb-24 text-white"
+            : ""
         }
-      />
-      <Route
-        path="/registro"
-        element={
-          autenticado ? (
-            <Navigate to="/" replace />
-          ) : (
-            <Register onRegister={autenticarUsuario} />
-          )
-        }
-      />
-
-      <Route
-        path="/"
-        element={protegerRuta(
-          <Home onLogout={cerrarSesion} />,
-        )}
-      />
-
-      <Route
-        path="/publicar"
-        element={protegerRuta(<CreatePost />)}
-      />
-
-      <Route
-        path="/reportar"
-        element={protegerRuta(<CreateReport />)}
-      />
-
-      <Route
-        path="/perfil"
-        element={protegerRuta(<Profile />)}
-      />
-
-      <Route
-        path="/editar-perfil"
-        element={protegerRuta(<EditProfile />)}
-      />
+      >
 
 
-      <Route
-        path="/mensajes"
-        element={protegerRuta(<Messages />)}
-      />
-
-
-
-
-      <Route
-        path="/personas"
-        element={protegerRuta(<People />)}
-      />
-
-
-      <Route
-        path="/usuario/:id"
-        element={protegerRuta(<UserProfile />)}
-      />
-
-      <Route
-        path="/notificaciones"
-        element={protegerRuta(<Notifications />)}
-      />
-
-      <Route
-        path="/mapa"
-        element={protegerRuta(<MapPage />)}
-      />
-
-      <Route
-        path="/buscar"
-        element={protegerRuta(<SearchPage />)}
-      />
-
-
-      <Route
-        path="/comunidades"
-        element={protegerRuta(<Communities />)}
-      />
-
-      <Route
-        path="/comunidad/:id"
-        element={protegerRuta(<CommunityDetail />)}
-      />
-
-      <Route
-        path="*"
-        element={
-          <Navigate
-            to={autenticado ? "/" : "/login"}
-            replace
+        <Routes>
+          <Route
+            path="/login"
+            element={
+              autenticado ? (
+                <Navigate to="/" replace />
+              ) : (
+                <Login onLogin={autenticarUsuario} />
+              )
+            }
           />
-        }
-      />
-    </Routes>
+
+          <Route
+            path="/registro"
+            element={
+              autenticado ? (
+                <Navigate to="/" replace />
+              ) : (
+                <Register onRegister={autenticarUsuario} />
+              )
+            }
+          />
+
+          <Route
+            path="/"
+            element={protegerRuta(<Home onLogout={cerrarSesion} />)}
+          />
+
+          <Route
+            path="/publicar"
+            element={protegerRuta(<CreatePost />)}
+          />
+
+          <Route
+            path="/reportar"
+            element={protegerRuta(<CreateReport />)}
+          />
+
+          <Route path="/perfil" element={protegerRuta(<Profile />)} />
+
+          <Route
+            path="/editar-perfil"
+            element={protegerRuta(<EditProfile />)}
+          />
+
+          <Route path="/mensajes" element={protegerRuta(<Messages />)} />
+
+          <Route path="/personas" element={protegerRuta(<People />)} />
+
+          <Route
+            path="/usuario/:id"
+            element={protegerRuta(<UserProfile />)}
+          />
+
+          <Route
+            path="/notificaciones"
+            element={protegerRuta(<Notifications />)}
+          />
+
+          <Route path="/mapa" element={protegerRuta(<MapPage />)} />
+
+          <Route path="/buscar" element={protegerRuta(<SearchPage />)} />
+
+          <Route
+            path="/comunidades"
+            element={protegerRuta(<Communities />)}
+          />
+
+          <Route
+            path="/comunidad/:id"
+            element={protegerRuta(<CommunityDetail />)}
+          />
+
+          <Route
+            path="*"
+            element={
+              <Navigate to={autenticado ? "/" : "/login"} replace />
+            }
+          />
+        </Routes>
+      </div>
+
+      {autenticado && <BottomNav />}
+    </>
   );
 }

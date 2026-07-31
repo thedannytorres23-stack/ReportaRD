@@ -10,6 +10,7 @@ import {
   LogOut,
   Map,
   MapPin,
+  Megaphone,
   MessageCircle,
   Menu,
   MoreHorizontal,
@@ -22,7 +23,7 @@ import {
   Wrench,
   X,
 } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import PostCard from "../components/PostCard";
 import ReportCard from "../components/ReportCard";
 import SideMenu from "../components/SideMenu";
@@ -229,6 +230,7 @@ const obtenerHistoriasGuardadas = () => {
 
 export default function Home({ onLogout }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [perfil] = useState(obtenerPerfilGuardado);
 
@@ -238,6 +240,9 @@ export default function Home({ onLogout }) {
   const iniciales = obtenerIniciales(perfil.nombre);
 
   const [menuAbierto, setMenuAbierto] = useState(false);
+
+  const [menuAccionesAbierto, setMenuAccionesAbierto] =
+    useState(false);
 
   const [mostrarCierreSesion, setMostrarCierreSesion] =
     useState(false);
@@ -263,6 +268,15 @@ export default function Home({ onLogout }) {
       JSON.stringify(historiasPropias),
     );
   }, [historiasPropias]);
+
+  useEffect(() => {
+    const parametros = new URLSearchParams(location.search);
+
+    if (parametros.get("crearHistoria") === "1") {
+      setMostrarCrearHistoria(true);
+      navigate("/", { replace: true });
+    }
+  }, [location.search, navigate]);
 
   useEffect(() => {
     if (historiaActiva === null) return undefined;
@@ -322,6 +336,19 @@ export default function Home({ onLogout }) {
         ? indiceActual + 1
         : null,
     );
+  };
+
+  const eliminarHistoria = (historiaId) => {
+    const confirmado = window.confirm(
+      "¿Quieres eliminar esta historia? Esta acción no se puede deshacer.",
+    );
+
+    if (!confirmado) return;
+
+    setHistoriasPropias((actuales) =>
+      actuales.filter((historia) => historia.id !== historiaId),
+    );
+    setHistoriaActiva(null);
   };
 
   const historiaVisible =
@@ -460,39 +487,68 @@ export default function Home({ onLogout }) {
             </div>
 
             <div className="scrollbar-none flex gap-3 overflow-x-auto px-5 pb-2">
-              <button
-                type="button"
-                onClick={() => setMostrarCrearHistoria(true)}
-                className="group flex w-[72px] shrink-0 flex-col items-center gap-2"
-              >
-                <span className="relative flex h-16 w-16 items-center justify-center rounded-full border border-dashed border-blue-400/50 bg-blue-500/10 transition duration-300 group-hover:scale-105 group-active:scale-95">
-                  {perfil.foto ? (
-                    <img
-                      src={perfil.foto}
-                      alt={`Foto de ${perfil.nombre}`}
-                      className="h-full w-full rounded-full object-cover opacity-50"
-                    />
-                  ) : (
-                    <span className="text-sm font-bold text-slate-400">
-                      {iniciales}
+              <div className="relative flex w-[72px] shrink-0 flex-col items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (historiasPropias.length > 0) {
+                      setHistoriaActiva(0);
+                    } else {
+                      setMostrarCrearHistoria(true);
+                    }
+                  }}
+                  className="group"
+                >
+                  <span
+                    className={`relative flex h-16 w-16 items-center justify-center rounded-full transition duration-300 group-hover:scale-105 group-active:scale-95 ${
+                      historiasPropias.length > 0
+                        ? `bg-gradient-to-br p-[2px] ${historiasPropias[0].color}`
+                        : "border border-dashed border-blue-400/50 bg-blue-500/10"
+                    }`}
+                  >
+                    <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-[#06101f] bg-[#0b1626] text-sm font-bold text-white">
+                      {perfil.foto ? (
+                        <img
+                          src={perfil.foto}
+                          alt={`Foto de ${perfil.nombre}`}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        iniciales
+                      )}
                     </span>
-                  )}
 
-                  <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-[#06101f] bg-blue-500 text-white shadow-lg shadow-blue-500/30">
-                    <Plus size={14} strokeWidth={3} />
+                    {historiasPropias.length > 1 && (
+                      <span className="absolute -left-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-[#06101f] bg-violet-500 px-1 text-[9px] font-bold text-white">
+                        {historiasPropias.length}
+                      </span>
+                    )}
                   </span>
-                </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setMostrarCrearHistoria(true)}
+                  aria-label="Agregar otra historia"
+                  className="absolute right-1 top-11 flex h-6 w-6 items-center justify-center rounded-full border-2 border-[#06101f] bg-blue-500 text-white shadow-lg shadow-blue-500/30 transition active:scale-90"
+                >
+                  <Plus size={14} strokeWidth={3} />
+                </button>
 
                 <span className="w-full truncate text-center text-[10px] text-slate-400">
-                  Tu historia
+                  {historiasPropias.length > 0
+                    ? "Tu historia"
+                    : "Crear historia"}
                 </span>
-              </button>
+              </div>
 
-              {historias.map((historia, indice) => (
+              {historiasIniciales.map((historia, indice) => (
                 <button
                   type="button"
                   key={historia.id}
-                  onClick={() => setHistoriaActiva(indice)}
+                  onClick={() =>
+                    setHistoriaActiva(historiasPropias.length + indice)
+                  }
                   style={{ animationDelay: `${indice * 70}ms` }}
                   className="story-enter group flex w-[72px] shrink-0 flex-col items-center gap-2"
                 >
@@ -632,18 +688,20 @@ export default function Home({ onLogout }) {
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => navigate("/mapa")}
-                className="flex items-center gap-1 text-xs font-medium text-red-400"
-              >
-                <MapPin size={15} />
-                Abrir mapa
-              </button>
+              <span className="rounded-full bg-red-500/10 px-2.5 py-1 text-[10px] font-medium text-red-400">
+                Toca el mapa para explorar
+              </span>
             </div>
 
-            <div className="relative h-40 overflow-hidden rounded-2xl border border-blue-400/10 bg-[#0b2138]">
+            <button
+              type="button"
+              onClick={() => navigate("/mapa")}
+              aria-label="Abrir mapa de actividad cercana"
+              className="group relative block h-40 w-full overflow-hidden rounded-2xl border border-blue-400/10 bg-[#0b2138] text-left transition duration-300 hover:border-blue-400/30 active:scale-[0.99]"
+            >
               <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(#3b82f6_1px,transparent_1px),linear-gradient(90deg,#3b82f6_1px,transparent_1px)] [background-size:32px_32px]" />
+
+              <div className="absolute inset-0 bg-gradient-to-t from-[#06101f]/55 to-transparent opacity-0 transition duration-300 group-hover:opacity-100" />
 
               <span className="absolute left-[20%] top-[55%] h-4 w-4 rounded-full border-4 border-red-300 bg-red-500 shadow-lg shadow-red-500/50" />
 
@@ -652,7 +710,11 @@ export default function Home({ onLogout }) {
               <span className="absolute right-[18%] top-[48%] h-4 w-4 rounded-full border-4 border-amber-300 bg-amber-500 shadow-lg shadow-amber-500/50" />
 
               <span className="absolute bottom-[18%] right-[38%] h-4 w-4 rounded-full border-4 border-green-300 bg-green-500 shadow-lg shadow-green-500/50" />
-            </div>
+
+              <span className="absolute bottom-3 left-1/2 -translate-x-1/2 translate-y-3 rounded-full border border-white/10 bg-[#06101f]/90 px-3 py-1.5 text-[10px] font-semibold text-white opacity-0 shadow-xl backdrop-blur transition duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+                Explorar actividad cercana
+              </span>
+            </button>
           </section>
 
           <section className="border-t border-white/5 px-5 py-6">
@@ -684,7 +746,85 @@ export default function Home({ onLogout }) {
           </section>
         </main>
 
-        <nav className="fixed bottom-0 left-1/2 z-30 flex w-full max-w-md -translate-x-1/2 items-center justify-around border-t border-white/10 bg-[#06101f]/95 px-3 pb-4 pt-3 backdrop-blur-xl">
+        {menuAccionesAbierto && (
+          <button
+            type="button"
+            onClick={() => setMenuAccionesAbierto(false)}
+            aria-label="Cerrar acciones"
+            className="fixed inset-0 z-20 bg-black/45 backdrop-blur-[2px]"
+          />
+        )}
+
+        <div
+          className={`pointer-events-none fixed bottom-[5.8rem] left-1/2 z-40 h-28 w-full max-w-sm -translate-x-1/2 transition ${
+            menuAccionesAbierto ? "visible" : "invisible"
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setMenuAccionesAbierto(false);
+              navigate("/publicar");
+            }}
+            className={`pointer-events-auto absolute bottom-0 left-7 flex flex-col items-center gap-2 transition-all duration-300 ease-out ${
+              menuAccionesAbierto
+                ? "translate-x-0 translate-y-0 scale-100 opacity-100"
+                : "translate-x-20 translate-y-16 scale-50 opacity-0"
+            }`}
+          >
+            <span className="flex h-13 w-13 items-center justify-center rounded-2xl border border-blue-300/20 bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-xl shadow-blue-500/30 transition hover:-translate-y-1 active:scale-90">
+              <PenLine size={21} />
+            </span>
+            <span className="rounded-full bg-[#0b1626]/95 px-2.5 py-1 text-[10px] font-semibold text-blue-300 shadow-lg">
+              Publicar
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setMenuAccionesAbierto(false);
+              setMostrarCrearHistoria(true);
+            }}
+            className={`pointer-events-auto absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 transition-all delay-75 duration-300 ease-out ${
+              menuAccionesAbierto
+                ? "translate-y-0 scale-100 opacity-100"
+                : "translate-y-20 scale-50 opacity-0"
+            }`}
+          >
+            <span className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-300/20 bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-xl shadow-violet-500/30 transition hover:-translate-y-1 active:scale-90">
+              <Image size={22} />
+              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[#06101f] bg-amber-400 text-[9px] text-slate-950">
+                <Sparkles size={10} />
+              </span>
+            </span>
+            <span className="rounded-full bg-[#0b1626]/95 px-2.5 py-1 text-[10px] font-semibold text-violet-300 shadow-lg">
+              Historia
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setMenuAccionesAbierto(false);
+              navigate("/reportar");
+            }}
+            className={`pointer-events-auto absolute bottom-0 right-7 flex flex-col items-center gap-2 transition-all delay-150 duration-300 ease-out ${
+              menuAccionesAbierto
+                ? "translate-x-0 translate-y-0 scale-100 opacity-100"
+                : "-translate-x-20 translate-y-16 scale-50 opacity-0"
+            }`}
+          >
+            <span className="flex h-13 w-13 items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500 to-orange-500 text-white shadow-xl shadow-red-500/30 transition hover:-translate-y-1 active:scale-90">
+              <Megaphone size={22} />
+            </span>
+            <span className="rounded-full bg-[#0b1626]/95 px-2.5 py-1 text-[10px] font-semibold text-red-300 shadow-lg">
+              Reportar
+            </span>
+          </button>
+        </div>
+
+        <nav className="hidden">
           <button
             type="button"
             className="flex flex-col items-center gap-1 text-red-500"
@@ -708,11 +848,34 @@ export default function Home({ onLogout }) {
 
           <button
             type="button"
-            onClick={() => navigate("/reportar")}
-            aria-label="Crear reporte"
-            className="-mt-8 flex h-14 w-14 items-center justify-center rounded-full border-4 border-[#06101f] bg-red-500 text-white shadow-lg shadow-red-500/30"
+            onClick={() =>
+              setMenuAccionesAbierto((estadoActual) => !estadoActual)
+            }
+            aria-label={
+              menuAccionesAbierto
+                ? "Cerrar acciones"
+                : "Abrir acciones de creación"
+            }
+            aria-expanded={menuAccionesAbierto}
+            className={`group relative -mt-8 flex h-16 w-16 items-center justify-center rounded-full border-4 border-[#06101f] bg-gradient-to-br from-red-500 via-red-500 to-orange-500 text-white shadow-xl transition-all duration-300 active:scale-90 ${
+              menuAccionesAbierto
+                ? "scale-110 shadow-red-500/50"
+                : "shadow-red-500/30 hover:-translate-y-1"
+            }`}
           >
-            <Plus size={28} />
+            {!menuAccionesAbierto && (
+              <span className="absolute inset-1 animate-ping rounded-full bg-red-400/20 [animation-duration:2.6s]" />
+            )}
+
+            <span className="absolute inset-1 rounded-full border border-white/15" />
+
+            <Plus
+              size={29}
+              strokeWidth={2.6}
+              className={`relative transition-transform duration-300 ${
+                menuAccionesAbierto ? "rotate-45" : "rotate-0"
+              }`}
+            />
           </button>
 
           <button
@@ -793,6 +956,17 @@ export default function Home({ onLogout }) {
                     {historiaVisible.tiempo}
                   </p>
                 </div>
+
+                {historiaVisible.propia && (
+                  <button
+                    type="button"
+                    onClick={() => eliminarHistoria(historiaVisible.id)}
+                    aria-label="Eliminar historia"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-black/20 text-white/80 backdrop-blur transition hover:bg-red-500/40 hover:text-white active:scale-95"
+                  >
+                    <Trash2 size={19} />
+                  </button>
+                )}
 
                 <button
                   type="button"
