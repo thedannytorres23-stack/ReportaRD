@@ -14,6 +14,7 @@ import Communities from "./pages/Communities";
 import People from "./pages/People";
 import UserProfile from "./pages/UserProfile";
 import CommunityDetail from "./pages/CommunityDetail";
+import Messages from "./pages/Messages";
 
 
 export default function App() {
@@ -90,6 +91,15 @@ export default function App() {
         path="/editar-perfil"
         element={protegerRuta(<EditProfile />)}
       />
+
+
+      <Route
+        path="/mensajes"
+        element={protegerRuta(<Messages />)}
+      />
+
+
+
 
       <Route
         path="/personas"

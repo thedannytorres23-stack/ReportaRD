@@ -1,20 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Bell,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
   House,
   Image,
   Lightbulb,
   LogOut,
   Map,
   MapPin,
+  MessageCircle,
   Menu,
   MoreHorizontal,
   PenLine,
   Plus,
   Search,
+  Sparkles,
   Trash2,
   UserRound,
   Wrench,
+  X,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import PostCard from "../components/PostCard";
@@ -161,6 +167,61 @@ const obtenerIniciales = (nombre) => {
     .join("");
 };
 
+const historiasIniciales = [
+  {
+    id: "historia-maria",
+    autor: "María Fernández",
+    iniciales: "MF",
+    tiempo: "Hace 12 min",
+    texto: "Hoy nos unimos para recuperar el parque del sector. 🌳",
+    color: "from-violet-600 via-fuchsia-600 to-red-500",
+    vistas: 86,
+  },
+  {
+    id: "historia-laura",
+    autor: "Laura Méndez",
+    iniciales: "LM",
+    tiempo: "Hace 28 min",
+    texto: "Reporte confirmado: brigadas revisando la avenida Estrella Sadhalá.",
+    color: "from-blue-600 via-cyan-500 to-emerald-500",
+    vistas: 54,
+  },
+  {
+    id: "historia-jose",
+    autor: "José Martínez",
+    iniciales: "JM",
+    tiempo: "Hace 1 h",
+    texto: "Cuando la comunidad participa, el cambio se nota. 🇩🇴",
+    color: "from-amber-500 via-orange-500 to-red-600",
+    vistas: 121,
+  },
+  {
+    id: "historia-santiago",
+    autor: "Santiago Verde",
+    iniciales: "SV",
+    tiempo: "Hace 2 h",
+    texto: "Nueva jornada de reciclaje este sábado. ¡Te esperamos!",
+    color: "from-emerald-600 via-green-500 to-cyan-500",
+    vistas: 73,
+  },
+];
+
+const coloresHistoria = [
+  "from-blue-600 via-violet-600 to-red-500",
+  "from-emerald-600 via-cyan-500 to-blue-600",
+  "from-amber-500 via-orange-500 to-red-600",
+  "from-fuchsia-600 via-pink-500 to-rose-500",
+];
+
+const obtenerHistoriasGuardadas = () => {
+  try {
+    const datos = localStorage.getItem("reportard_historias");
+    return datos ? JSON.parse(datos) : [];
+  } catch {
+    return [];
+  }
+};
+
 
 
 
@@ -180,6 +241,91 @@ export default function Home({ onLogout }) {
 
   const [mostrarCierreSesion, setMostrarCierreSesion] =
     useState(false);
+
+  const [historiasPropias, setHistoriasPropias] = useState(
+    obtenerHistoriasGuardadas,
+  );
+
+  const [historiaActiva, setHistoriaActiva] = useState(null);
+  const [progresoHistoria, setProgresoHistoria] = useState(0);
+  const [mostrarCrearHistoria, setMostrarCrearHistoria] =
+    useState(false);
+  const [textoHistoria, setTextoHistoria] = useState("");
+  const [colorHistoria, setColorHistoria] = useState(
+    coloresHistoria[0],
+  );
+
+  const historias = [...historiasPropias, ...historiasIniciales];
+
+  useEffect(() => {
+    localStorage.setItem(
+      "reportard_historias",
+      JSON.stringify(historiasPropias),
+    );
+  }, [historiasPropias]);
+
+  useEffect(() => {
+    if (historiaActiva === null) return undefined;
+
+    setProgresoHistoria(0);
+
+    const intervalo = window.setInterval(() => {
+      setProgresoHistoria((progresoActual) => {
+        if (progresoActual >= 99) {
+          if (historiaActiva < historias.length - 1) {
+            setHistoriaActiva((indiceActual) => indiceActual + 1);
+          } else {
+            setHistoriaActiva(null);
+          }
+
+          return 0;
+        }
+
+        return progresoActual + 1;
+      });
+    }, 60);
+
+    return () => window.clearInterval(intervalo);
+  }, [historiaActiva, historias.length]);
+
+  const crearHistoria = () => {
+    const textoLimpio = textoHistoria.trim();
+
+    if (!textoLimpio) return;
+
+    const nuevaHistoria = {
+      id: `historia-${Date.now()}`,
+      autor: perfil.nombre,
+      iniciales,
+      tiempo: "Ahora",
+      texto: textoLimpio,
+      color: colorHistoria,
+      vistas: 0,
+      propia: true,
+    };
+
+    setHistoriasPropias((actuales) => [nuevaHistoria, ...actuales]);
+    setTextoHistoria("");
+    setColorHistoria(coloresHistoria[0]);
+    setMostrarCrearHistoria(false);
+  };
+
+  const mostrarHistoriaAnterior = () => {
+    setHistoriaActiva((indiceActual) =>
+      indiceActual > 0 ? indiceActual - 1 : indiceActual,
+    );
+  };
+
+  const mostrarHistoriaSiguiente = () => {
+    setHistoriaActiva((indiceActual) =>
+      indiceActual < historias.length - 1
+        ? indiceActual + 1
+        : null,
+    );
+  };
+
+  const historiaVisible =
+    historiaActiva !== null ? historias[historiaActiva] : null;
 
   const confirmarCierreSesion = () => {
     setMostrarCierreSesion(false);
@@ -295,6 +441,76 @@ export default function Home({ onLogout }) {
                   </button>
                 </div>
               </div>
+            </div>
+          </section>
+
+          <section className="pb-6">
+            <div className="mb-4 flex items-center justify-between px-5">
+              <div>
+                <h2 className="font-semibold">Historias ciudadanas</h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  Momentos que están moviendo tu comunidad
+                </p>
+              </div>
+
+              <span className="flex items-center gap-1 rounded-full bg-blue-500/10 px-2.5 py-1 text-[10px] font-medium text-blue-400">
+                <Sparkles size={12} />
+                En vivo
+              </span>
+            </div>
+
+            <div className="scrollbar-none flex gap-3 overflow-x-auto px-5 pb-2">
+              <button
+                type="button"
+                onClick={() => setMostrarCrearHistoria(true)}
+                className="group flex w-[72px] shrink-0 flex-col items-center gap-2"
+              >
+                <span className="relative flex h-16 w-16 items-center justify-center rounded-full border border-dashed border-blue-400/50 bg-blue-500/10 transition duration-300 group-hover:scale-105 group-active:scale-95">
+                  {perfil.foto ? (
+                    <img
+                      src={perfil.foto}
+                      alt={`Foto de ${perfil.nombre}`}
+                      className="h-full w-full rounded-full object-cover opacity-50"
+                    />
+                  ) : (
+                    <span className="text-sm font-bold text-slate-400">
+                      {iniciales}
+                    </span>
+                  )}
+
+                  <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-[#06101f] bg-blue-500 text-white shadow-lg shadow-blue-500/30">
+                    <Plus size={14} strokeWidth={3} />
+                  </span>
+                </span>
+
+                <span className="w-full truncate text-center text-[10px] text-slate-400">
+                  Tu historia
+                </span>
+              </button>
+
+              {historias.map((historia, indice) => (
+                <button
+                  type="button"
+                  key={historia.id}
+                  onClick={() => setHistoriaActiva(indice)}
+                  style={{ animationDelay: `${indice * 70}ms` }}
+                  className="story-enter group flex w-[72px] shrink-0 flex-col items-center gap-2"
+                >
+                  <span
+                    className={`relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br p-[2px] transition duration-300 group-hover:-translate-y-1 group-hover:scale-105 group-active:scale-95 ${historia.color}`}
+                  >
+                    <span className="flex h-full w-full items-center justify-center rounded-full border-2 border-[#06101f] bg-[#0b1626] text-sm font-bold text-white">
+                      {historia.iniciales}
+                    </span>
+
+                    <span className="absolute bottom-1 right-0 h-3 w-3 rounded-full border-2 border-[#06101f] bg-green-400" />
+                  </span>
+
+                  <span className="w-full truncate text-center text-[10px] text-slate-400 transition group-hover:text-white">
+                    {historia.autor.split(" ")[0]}
+                  </span>
+                </button>
+              ))}
             </div>
           </section>
 
@@ -501,12 +717,12 @@ export default function Home({ onLogout }) {
 
           <button
             type="button"
-            onClick={() => navigate("/notificaciones")}
+            onClick={() => navigate("/mensajes")}
             className="flex flex-col items-center gap-1 text-slate-500"
           >
-            <Bell size={21} />
+            <MessageCircle size={21} />
             <span className="text-[10px]">
-              Alertas
+              Mensajes
             </span>
           </button>
 
@@ -529,6 +745,191 @@ export default function Home({ onLogout }) {
         onClose={() => setMenuAbierto(false)}
         onRequestLogout={() => setMostrarCierreSesion(true)}
       />
+
+      {historiaVisible && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Historia de ${historiaVisible.autor}`}
+          className="story-viewer-enter fixed inset-0 z-[80] flex justify-center bg-black"
+        >
+          <div
+            className={`relative flex min-h-screen w-full max-w-md flex-col overflow-hidden bg-gradient-to-br ${historiaVisible.color}`}
+          >
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_25%_15%,rgba(255,255,255,0.22),transparent_30%),linear-gradient(to_bottom,rgba(0,0,0,0.08),rgba(0,0,0,0.55))]" />
+
+            <header className="relative z-20 px-4 pt-4">
+              <div className="flex gap-1">
+                {historias.map((historia, indice) => (
+                  <span
+                    key={historia.id}
+                    className="h-1 flex-1 overflow-hidden rounded-full bg-white/25"
+                  >
+                    <span
+                      className="block h-full rounded-full bg-white transition-[width] duration-75"
+                      style={{
+                        width:
+                          indice < historiaActiva
+                            ? "100%"
+                            : indice === historiaActiva
+                              ? `${progresoHistoria}%`
+                              : "0%",
+                      }}
+                    />
+                  </span>
+                ))}
+              </div>
+
+              <div className="mt-4 flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-black/20 text-xs font-bold backdrop-blur">
+                  {historiaVisible.iniciales}
+                </span>
+
+                <div className="min-w-0 flex-1">
+                  <h2 className="truncate text-sm font-semibold">
+                    {historiaVisible.autor}
+                  </h2>
+                  <p className="text-[11px] text-white/65">
+                    {historiaVisible.tiempo}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setHistoriaActiva(null)}
+                  aria-label="Cerrar historia"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-black/20 backdrop-blur transition hover:bg-black/35 active:scale-95"
+                >
+                  <X size={22} />
+                </button>
+              </div>
+            </header>
+
+            <button
+              type="button"
+              onClick={mostrarHistoriaAnterior}
+              aria-label="Historia anterior"
+              disabled={historiaActiva === 0}
+              className="absolute bottom-24 left-4 z-30 flex h-11 w-11 items-center justify-center rounded-full bg-black/20 backdrop-blur transition hover:bg-black/35 active:scale-95 disabled:opacity-0"
+            >
+              <ChevronLeft size={25} />
+            </button>
+
+            <button
+              type="button"
+              onClick={mostrarHistoriaSiguiente}
+              aria-label="Historia siguiente"
+              className="absolute bottom-24 right-4 z-30 flex h-11 w-11 items-center justify-center rounded-full bg-black/20 backdrop-blur transition hover:bg-black/35 active:scale-95"
+            >
+              <ChevronRight size={25} />
+            </button>
+
+            <main className="relative z-10 flex flex-1 items-center justify-center px-10 py-24 text-center">
+              <div className="story-content-enter">
+                <Sparkles size={26} className="mx-auto mb-5 text-white/75" />
+                <p className="text-2xl font-bold leading-snug drop-shadow-lg">
+                  {historiaVisible.texto}
+                </p>
+              </div>
+            </main>
+
+            <footer className="relative z-20 flex items-center justify-between px-5 pb-8 text-xs text-white/75">
+              <span className="flex items-center gap-2 rounded-full bg-black/20 px-3 py-2 backdrop-blur">
+                <Eye size={15} />
+                {historiaVisible.vistas} vistas
+              </span>
+
+              <span className="rounded-full bg-black/20 px-3 py-2 backdrop-blur">
+                ReportaRD · Comunidad activa
+              </span>
+            </footer>
+          </div>
+        </div>
+      )}
+
+      {mostrarCrearHistoria && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="titulo-crear-historia"
+          className="fixed inset-0 z-[75] flex items-end justify-center bg-black/75 p-4 backdrop-blur-sm sm:items-center"
+        >
+          <div className="story-modal-enter w-full max-w-sm overflow-hidden rounded-3xl border border-white/10 bg-[#0b1626] shadow-2xl shadow-black/50">
+            <div
+              className={`relative flex h-52 items-center justify-center bg-gradient-to-br p-8 text-center ${colorHistoria}`}
+            >
+              <div className="pointer-events-none absolute inset-0 bg-black/10" />
+              <p className="relative text-xl font-bold leading-snug drop-shadow-lg">
+                {textoHistoria || "Tu historia puede inspirar a toda una comunidad"}
+              </p>
+
+              <button
+                type="button"
+                onClick={() => setMostrarCrearHistoria(false)}
+                aria-label="Cerrar"
+                className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-black/20 backdrop-blur"
+              >
+                <X size={19} />
+              </button>
+            </div>
+
+            <div className="p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <Sparkles size={17} className="text-blue-400" />
+                <h2 id="titulo-crear-historia">Crear historia</h2>
+              </div>
+
+              <textarea
+                value={textoHistoria}
+                onChange={(evento) =>
+                  setTextoHistoria(evento.target.value.slice(0, 140))
+                }
+                placeholder="Comparte algo que esté pasando..."
+                rows={3}
+                autoFocus
+                className="mt-4 w-full resize-none rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white outline-none placeholder:text-slate-600 focus:border-blue-500/50"
+              />
+
+              <div className="mt-2 flex items-center justify-between text-[10px] text-slate-600">
+                <span>Visible para tu comunidad</span>
+                <span>{textoHistoria.length}/140</span>
+              </div>
+
+              <div className="mt-4">
+                <p className="mb-3 text-xs font-medium text-slate-400">
+                  Elige un estilo
+                </p>
+
+                <div className="flex gap-3">
+                  {coloresHistoria.map((color) => (
+                    <button
+                      type="button"
+                      key={color}
+                      onClick={() => setColorHistoria(color)}
+                      aria-label="Seleccionar estilo"
+                      className={`h-10 flex-1 rounded-xl bg-gradient-to-br transition active:scale-95 ${color} ${
+                        colorHistoria === color
+                          ? "ring-2 ring-white ring-offset-2 ring-offset-[#0b1626]"
+                          : "opacity-60 hover:opacity-100"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={crearHistoria}
+                disabled={!textoHistoria.trim()}
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-500 px-4 py-3 font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Plus size={19} />
+                Publicar historia
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
 
 
@@ -576,6 +977,81 @@ export default function Home({ onLogout }) {
           </div>
         </div>
       )}
+
+      <style>{`
+        .scrollbar-none::-webkit-scrollbar {
+          display: none;
+        }
+
+        .scrollbar-none {
+          scrollbar-width: none;
+        }
+
+        .story-enter {
+          opacity: 0;
+          animation: storyEnter 520ms cubic-bezier(.2,.8,.2,1) forwards;
+        }
+
+        .story-viewer-enter {
+          animation: storyViewerEnter 260ms ease-out both;
+        }
+
+        .story-content-enter {
+          animation: storyContentEnter 520ms cubic-bezier(.2,.8,.2,1) both;
+        }
+
+        .story-modal-enter {
+          animation: storyModalEnter 320ms cubic-bezier(.2,.8,.2,1) both;
+        }
+
+        @keyframes storyEnter {
+          from {
+            opacity: 0;
+            transform: translateY(12px) scale(.94);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @keyframes storyViewerEnter {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes storyContentEnter {
+          from {
+            opacity: 0;
+            transform: translateY(18px) scale(.96);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @keyframes storyModalEnter {
+          from {
+            opacity: 0;
+            transform: translateY(24px) scale(.97);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .story-enter,
+          .story-viewer-enter,
+          .story-content-enter,
+          .story-modal-enter {
+            animation: none;
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 }
