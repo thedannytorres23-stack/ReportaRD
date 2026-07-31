@@ -10,6 +10,7 @@ import EditProfile from "./pages/EditProfile";
 import Notifications from "./pages/Notifications";
 import MapPage from "./pages/MapPage";
 import SearchPage from "./pages/SearchPage";
+import Communities from "./pages/Communities";
 import People from "./pages/People";
 import UserProfile from "./pages/UserProfile";
 
@@ -113,6 +114,12 @@ export default function App() {
       <Route
         path="/buscar"
         element={protegerRuta(<SearchPage />)}
+      />
+
+
+      <Route
+        path="/comunidades"
+        element={protegerRuta(<Communities />)}
       />
 
       <Route
