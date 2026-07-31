@@ -13,6 +13,7 @@ import SearchPage from "./pages/SearchPage";
 import Communities from "./pages/Communities";
 import People from "./pages/People";
 import UserProfile from "./pages/UserProfile";
+import CommunityDetail from "./pages/CommunityDetail";
 
 
 export default function App() {
@@ -120,6 +121,11 @@ export default function App() {
       <Route
         path="/comunidades"
         element={protegerRuta(<Communities />)}
+      />
+
+      <Route
+        path="/comunidad/:id"
+        element={protegerRuta(<CommunityDetail />)}
       />
 
       <Route

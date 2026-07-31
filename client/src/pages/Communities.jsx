@@ -341,31 +341,43 @@ export default function Communities() {
                       </span>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        cambiarMembresia(comunidad.id)
-                      }
-                      className={`mt-4 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition active:scale-[0.98] ${
-                        unido
-                          ? "border border-white/10 bg-white/5 text-slate-300"
-                          : "bg-violet-500 text-white hover:bg-violet-400"
-                      }`}
-                    >
-                      {unido ? (
-                        <>
-                          <UserCheck size={18} />
-                          Miembro
-                        </>
-                      ) : (
-                        <>
-                          <UserPlus size={18} />
-                          {comunidad.privada
-                            ? "Solicitar acceso"
-                            : "Unirme"}
-                        </>
-                      )}
-                    </button>
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate(`/comunidad/${comunidad.id}`)
+                        }
+                        className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm font-semibold text-slate-200 transition duration-200 hover:bg-white/10 active:scale-95"
+                      >
+                        Ver comunidad
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          cambiarMembresia(comunidad.id)
+                        }
+                        className={`flex items-center justify-center gap-2 rounded-2xl px-3 py-3 text-sm font-semibold transition duration-200 active:scale-95 ${
+                          unido
+                            ? "border border-white/10 bg-white/5 text-slate-300 hover:bg-red-500/10 hover:text-red-400"
+                            : "bg-violet-500 text-white shadow-lg shadow-violet-500/20 hover:bg-violet-400"
+                        }`}
+                      >
+                        {unido ? (
+                          <>
+                            <UserCheck size={18} />
+                            Miembro
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus size={18} />
+                            {comunidad.privada
+                              ? "Solicitar"
+                              : "Unirme"}
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </article>
               );
