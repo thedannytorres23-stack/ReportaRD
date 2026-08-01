@@ -16,6 +16,7 @@ import People from "./pages/People";
 import UserProfile from "./pages/UserProfile";
 import CommunityDetail from "./pages/CommunityDetail";
 import Messages from "./pages/Messages";
+import ContentDetail from "./pages/ContentDetail";
 
 export default function App() {
   const [autenticado, setAutenticado] = useState(() => {
@@ -41,12 +42,10 @@ export default function App() {
       <div
         className={
           autenticado
-            ? "min-h-screen bg-slate-950 pb-24 text-white"
-            : ""
+            ? "min-h-screen bg-slate-950 pb-24"
+            : "min-h-screen bg-slate-950"
         }
       >
-
-
         <Routes>
           <Route
             path="/login"
@@ -93,6 +92,16 @@ export default function App() {
           />
 
           <Route path="/mensajes" element={protegerRuta(<Messages />)} />
+
+          <Route
+            path="/publicacion/:id"
+            element={protegerRuta(<ContentDetail />)}
+          />
+
+          <Route
+            path="/reporte/:id"
+            element={protegerRuta(<ContentDetail />)}
+          />
 
           <Route path="/personas" element={protegerRuta(<People />)} />
 

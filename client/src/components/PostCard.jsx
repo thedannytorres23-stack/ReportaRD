@@ -11,7 +11,7 @@ import {
 import { useNavigate } from "react-router";
 import ContentOptions from "./ContentOptions";
 
-export default function PostCard({ publicacion }) {
+export default function PostCard({ publicacion, modoDetalle = false }) {
   const navigate = useNavigate();
 
   const idModeracion = `post-${
@@ -64,6 +64,24 @@ export default function PostCard({ publicacion }) {
     if (publicacion.autorId) {
       navigate(`/usuario/${publicacion.autorId}`);
     }
+  };
+
+  const abrirDetalle = () => {
+    if (modoDetalle) return;
+
+    const seleccion = {
+      tipo: "publicacion",
+      datos: publicacion,
+    };
+
+    localStorage.setItem(
+      "reportard_selected_content",
+      JSON.stringify(seleccion),
+    );
+
+    navigate(`/publicacion/${publicacion.id ?? "actual"}`, {
+      state: seleccion,
+    });
   };
 
   const clavePublicacion = useMemo(
@@ -335,7 +353,19 @@ export default function PostCard({ publicacion }) {
         />
       </header>
 
-      <div className="px-4 pb-4">
+      <div
+        onClick={abrirDetalle}
+        role={modoDetalle ? undefined : "button"}
+        tabIndex={modoDetalle ? undefined : 0}
+        onKeyDown={(evento) => {
+          if (!modoDetalle && ["Enter", " "].includes(evento.key)) {
+            abrirDetalle();
+          }
+        }}
+        className={`px-4 pb-4 ${
+          modoDetalle ? "" : "cursor-pointer"
+        }`}
+      >
         <p className="text-sm leading-6 text-slate-200">
           {publicacion.contenido}
         </p>
@@ -361,6 +391,7 @@ export default function PostCard({ publicacion }) {
               `Contenido compartido por ${publicacion.autor}`
             }
             loading="lazy"
+            onClick={abrirDetalle}
             className="max-h-96 w-full object-cover"
           />
         )

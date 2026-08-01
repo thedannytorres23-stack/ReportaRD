@@ -11,7 +11,7 @@ import {
 import { useNavigate } from "react-router";
 import ContentOptions from "./ContentOptions";
 
-export default function ReportCard({ reporte }) {
+export default function ReportCard({ reporte, modoDetalle = false }) {
   const navigate = useNavigate();
 
   const idModeracion = `report-${
@@ -64,6 +64,24 @@ export default function ReportCard({ reporte }) {
     if (reporte.autorId) {
       navigate(`/usuario/${reporte.autorId}`);
     }
+  };
+
+  const abrirDetalle = () => {
+    if (modoDetalle) return;
+
+    const seleccion = {
+      tipo: "reporte",
+      datos: reporte,
+    };
+
+    localStorage.setItem(
+      "reportard_selected_content",
+      JSON.stringify(seleccion),
+    );
+
+    navigate(`/reporte/${reporte.id ?? "actual"}`, {
+      state: seleccion,
+    });
   };
   const claveReporte = useMemo(
     () =>
@@ -320,7 +338,12 @@ export default function ReportCard({ reporte }) {
           </span>
         </div>
 
-        <h3 className="mt-4 text-lg font-bold text-white">
+        <h3
+          onClick={abrirDetalle}
+          className={`mt-4 text-lg font-bold text-white ${
+            modoDetalle ? "" : "cursor-pointer hover:text-red-300"
+          }`}
+        >
           {reporte.titulo}
         </h3>
 
@@ -353,6 +376,7 @@ export default function ReportCard({ reporte }) {
                 `Evidencia del reporte: ${reporte.titulo}`
               }
               loading="lazy"
+              onClick={abrirDetalle}
               className="h-56 w-full object-cover transition duration-500 hover:scale-[1.02]"
             />
           )}
