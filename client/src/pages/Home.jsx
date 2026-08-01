@@ -53,6 +53,66 @@ const categorias = [
 
 const contenidoFeed = [
   {
+    id: "post-video-debate-rd",
+    tipo: "publicacion",
+    datos: {
+      id: "post-video-debate-rd",
+      autor: "Actualidad Dominicana",
+      iniciales: "AD",
+      verificado: false,
+      comunidad: "Debate ciudadano",
+      tiempo: "Hace 3 min",
+      contenido:
+        "Una declaración que está generando conversación en las redes dominicanas. Recuerda participar con respeto: ¿qué opinas? 🇩🇴",
+      mediaUrl: "/videos/debate-ciudadano-rd.mp4",
+      mediaTipo: "video",
+      mediaPoster: "/images/debate-ciudadano-rd.jpg",
+      reacciones: 86,
+      comentarios: 31,
+      compartidos: 18,
+    },
+  },
+  {
+    id: "post-video-policia-rd",
+    tipo: "publicacion",
+    datos: {
+      id: "post-video-policia-rd",
+      autor: "Comunidad ReportaRD",
+      iniciales: "CR",
+      verificado: true,
+      comunidad: "República Dominicana",
+      tiempo: "Hace 6 min",
+      contenido:
+        "Un momento de la comunidad policial que se ha vuelto popular. También queremos mostrar el lado cercano y cotidiano de nuestro país.",
+      mediaUrl: "/videos/policia-comunidad-rd.mp4",
+      mediaTipo: "video",
+      mediaPoster: "/images/policia-comunidad-rd.jpg",
+      reacciones: 143,
+      comentarios: 22,
+      compartidos: 35,
+    },
+  },
+  {
+    id: "post-video-entretenimiento-rd",
+    tipo: "publicacion",
+    datos: {
+      id: "post-video-entretenimiento-rd",
+      autor: "Voces de RD",
+      iniciales: "VR",
+      verificado: false,
+      comunidad: "Entretenimiento dominicano",
+      tiempo: "Hace 9 min",
+      contenido:
+        "El humor y las ocurrencias que también forman parte de nuestras conversaciones diarias. ¿Qué te pareció este momento? 🇩🇴",
+      mediaUrl: "/videos/entretenimiento-dominicano-rd.mp4",
+      mediaTipo: "video",
+      mediaPoster: "/images/entretenimiento-dominicano-rd.jpg",
+      reacciones: 214,
+      comentarios: 47,
+      compartidos: 52,
+    },
+  },
+  {
     id: "post-1",
     tipo: "publicacion",
     datos: {
@@ -65,8 +125,11 @@ const contenidoFeed = [
       tiempo: "Hace 8 min",
       contenido:
         "Este sábado estaremos realizando una jornada de limpieza en el parque del sector. Todos los vecinos están invitados. 🇩🇴",
-      mediaUrl: null,
-      mediaTipo: null,
+      mediaUrl:
+        "https://images.unsplash.com/photo-1758599667717-27c61bcdd14b?auto=format&fit=crop&w=1200&q=82",
+      mediaTipo: "imagen",
+      mediaAlt:
+        "Voluntarios participando en una jornada comunitaria de limpieza",
       reacciones: 24,
       comentarios: 6,
       compartidos: 4,
@@ -89,6 +152,11 @@ const contenidoFeed = [
       descripcion:
         "Este hueco lleva más de una semana causando problemas a los conductores. Durante la noche es difícil verlo y puede provocar un accidente.",
       ubicacion: "Av. Estrella Sadhalá, Santiago",
+      mediaUrl:
+        "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=1200&q=82",
+      mediaTipo: "imagen",
+      mediaAlt:
+        "Avenida urbana donde fue reportado un daño en el pavimento",
       confirmaciones: 32,
       comentarios: 8,
       compartidos: 12,
@@ -107,8 +175,11 @@ const contenidoFeed = [
       tiempo: "Hace 26 min",
       contenido:
         "Gracias a todos los vecinos que ayudaron a recuperar el área verde. Cuando una comunidad se organiza, los cambios sí se notan.",
-      mediaUrl: null,
-      mediaTipo: null,
+      mediaUrl:
+        "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+      mediaTipo: "video",
+      mediaPoster:
+        "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=82",
       reacciones: 41,
       comentarios: 11,
       compartidos: 9,
@@ -131,6 +202,11 @@ const contenidoFeed = [
       descripcion:
         "La calle lleva varios días completamente oscura. Los residentes solicitamos que sea revisado lo antes posible.",
       ubicacion: "Calle Duarte, Santiago",
+      mediaUrl:
+        "https://images.unsplash.com/photo-1697722229764-2ee3445a5045?auto=format&fit=crop&w=1200&q=82",
+      mediaTipo: "imagen",
+      mediaAlt:
+        "Calle de noche con iluminación urbana que necesita revisión",
       confirmaciones: 18,
       comentarios: 5,
       compartidos: 7,
@@ -139,8 +215,8 @@ const contenidoFeed = [
 ];
 
 const perfilInicial = {
-  nombre: "Usuario de prueba-RD",
-  usuario: "usuario_prueba",
+  nombre: "Danny Torres",
+  usuario: "dannytorres",
   foto: "",
 };
 

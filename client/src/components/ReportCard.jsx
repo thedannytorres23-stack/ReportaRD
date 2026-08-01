@@ -5,14 +5,60 @@ import {
   Construction,
   MapPin,
   MessageCircle,
-  MoreHorizontal,
   Send,
   Share2,
 } from "lucide-react";
 import { useNavigate } from "react-router";
+import ContentOptions from "./ContentOptions";
 
 export default function ReportCard({ reporte }) {
   const navigate = useNavigate();
+
+  const idModeracion = `report-${
+    reporte.id ?? `${reporte.autor}-${reporte.tiempo}`
+  }`;
+
+  const [oculto, setOculto] = useState(() => {
+    try {
+      const ocultos = JSON.parse(
+        localStorage.getItem("reportard_hidden_content") || "[]",
+      );
+      const eliminados = JSON.parse(
+        localStorage.getItem("reportard_deleted_content") || "[]",
+      );
+      const silenciados = JSON.parse(
+        localStorage.getItem("reportard_muted_users") || "[]",
+      );
+      const bloqueados = JSON.parse(
+        localStorage.getItem("reportard_blocked_users") || "[]",
+      );
+
+      return (
+        ocultos.includes(idModeracion) ||
+        eliminados.includes(idModeracion) ||
+        silenciados.includes(reporte.autor) ||
+        bloqueados.includes(reporte.autor)
+      );
+    } catch {
+      return false;
+    }
+  });
+
+  const esPropio = (() => {
+    try {
+      const perfil = JSON.parse(
+        localStorage.getItem("reportard_profile") || "{}",
+      );
+
+      return (
+        reporte.esPropio === true ||
+        reporte.autor === perfil.nombre ||
+        reporte.autor === "Danny Torres"
+      );
+    } catch {
+      return reporte.esPropio === true;
+    }
+  })();
 
   const abrirPerfil = () => {
     if (reporte.autorId) {
@@ -82,6 +128,31 @@ export default function ReportCard({ reporte }) {
     comentarios,
     compartidosLocales,
   ]);
+
+  useEffect(() => {
+    const actualizarModeracion = (evento) => {
+      const { accion, contenidoId, autor } = evento.detail || {};
+
+      if (
+        contenidoId === idModeracion ||
+        (["silenciar", "bloquear"].includes(accion) &&
+          autor === reporte.autor)
+      ) {
+        setOculto(true);
+      }
+    };
+
+    window.addEventListener(
+      "reportard_moderation_changed",
+      actualizarModeracion,
+    );
+
+    return () =>
+      window.removeEventListener(
+        "reportard_moderation_changed",
+        actualizarModeracion,
+      );
+  }, [idModeracion, reporte.autor]);
 
   const cambiarConfirmacion = () => {
     setConfirmado((estadoActual) => !estadoActual);
@@ -187,14 +258,16 @@ export default function ReportCard({ reporte }) {
     }
   };
 
+  if (oculto) return null;
+
   return (
-    <article className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.035]">
-      <header className="flex items-start gap-3 p-4">
+    <article className="group/card overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.045] to-white/[0.025] shadow-xl shadow-black/10 transition duration-300 hover:border-white/[0.16]">
+      <header className="flex items-start gap-3 border-b border-white/[0.035] p-4">
         <button
           type="button"
           onClick={abrirPerfil}
           aria-label={`Abrir perfil de ${reporte.autor}`}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-red-500 font-bold text-white transition hover:scale-105 active:scale-95"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-white/10 bg-gradient-to-br from-blue-500 to-red-500 font-bold text-white shadow-lg shadow-red-500/15 transition hover:scale-105 active:scale-95"
         >
           {reporte.iniciales}
         </button>
@@ -224,13 +297,16 @@ export default function ReportCard({ reporte }) {
           </p>
         </div>
 
-        <button
-          type="button"
-          aria-label="Opciones del reporte"
-          className="rounded-full p-2 text-slate-500 transition hover:bg-white/5"
-        >
-          <MoreHorizontal size={20} />
-        </button>
+        <ContentOptions
+          contenidoId={idModeracion}
+          autor={reporte.autor}
+          tipo="reporte"
+          esPropio={esPropio}
+          onOcultar={() => setOculto(true)}
+          onEditar={() =>
+            navigate(`/reportar?editar=${reporte.id ?? "actual"}`)
+          }
+        />
       </header>
 
       <div className="px-4 pb-4">
@@ -258,17 +334,42 @@ export default function ReportCard({ reporte }) {
         </div>
       </div>
 
-      <div className="relative mx-4 flex h-56 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900">
-        <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(#64748b_1px,transparent_1px),linear-gradient(90deg,#64748b_1px,transparent_1px)] [background-size:28px_28px]" />
-
-        <div className="relative flex flex-col items-center text-slate-500">
-          <Construction size={45} />
-
-          <span className="mt-2 text-xs">
-            Fotografía del reporte
-          </span>
+      {reporte.mediaUrl ? (
+        <div className="mx-4 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-lg shadow-black/20">
+          {reporte.mediaTipo === "video" ? (
+            <video
+              src={reporte.mediaUrl}
+              poster={reporte.mediaPoster}
+              controls
+              playsInline
+              preload="metadata"
+              className="max-h-80 w-full bg-black object-cover"
+            />
+          ) : (
+            <img
+              src={reporte.mediaUrl}
+              alt={
+                reporte.mediaAlt ||
+                `Evidencia del reporte: ${reporte.titulo}`
+              }
+              loading="lazy"
+              className="h-56 w-full object-cover transition duration-500 hover:scale-[1.02]"
+            />
+          )}
         </div>
-      </div>
+      ) : (
+        <div className="relative mx-4 flex h-56 items-center justify-center overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-slate-800 to-slate-900 shadow-inner">
+          <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(#64748b_1px,transparent_1px),linear-gradient(90deg,#64748b_1px,transparent_1px)] [background-size:28px_28px]" />
+
+          <div className="relative flex flex-col items-center text-slate-500">
+            <Construction size={45} />
+
+            <span className="mt-2 text-xs">
+              Fotografía del reporte
+            </span>
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center justify-between px-4 py-4 text-xs text-slate-400">
         <button

@@ -4,15 +4,61 @@ import {
   CheckCircle2,
   Heart,
   MessageCircle,
-  MoreHorizontal,
   Send,
   Share2,
   Users,
 } from "lucide-react";
 import { useNavigate } from "react-router";
+import ContentOptions from "./ContentOptions";
 
 export default function PostCard({ publicacion }) {
   const navigate = useNavigate();
+
+  const idModeracion = `post-${
+    publicacion.id ?? `${publicacion.autor}-${publicacion.tiempo}`
+  }`;
+
+  const [oculto, setOculto] = useState(() => {
+    try {
+      const ocultos = JSON.parse(
+        localStorage.getItem("reportard_hidden_content") || "[]",
+      );
+      const eliminados = JSON.parse(
+        localStorage.getItem("reportard_deleted_content") || "[]",
+      );
+      const silenciados = JSON.parse(
+        localStorage.getItem("reportard_muted_users") || "[]",
+      );
+      const bloqueados = JSON.parse(
+        localStorage.getItem("reportard_blocked_users") || "[]",
+      );
+
+      return (
+        ocultos.includes(idModeracion) ||
+        eliminados.includes(idModeracion) ||
+        silenciados.includes(publicacion.autor) ||
+        bloqueados.includes(publicacion.autor)
+      );
+    } catch {
+      return false;
+    }
+  });
+
+  const esPropia = (() => {
+    try {
+      const perfil = JSON.parse(
+        localStorage.getItem("reportard_profile") || "{}",
+      );
+
+      return (
+        publicacion.esPropia === true ||
+        publicacion.autor === perfil.nombre ||
+        publicacion.autor === "Danny Torres"
+      );
+    } catch {
+      return publicacion.esPropia === true;
+    }
+  })();
 
   const abrirPerfil = () => {
     if (publicacion.autorId) {
@@ -120,6 +166,31 @@ export default function PostCard({ publicacion }) {
     compartidosLocales,
   ]);
 
+  useEffect(() => {
+    const actualizarModeracion = (evento) => {
+      const { accion, contenidoId, autor } = evento.detail || {};
+
+      if (
+        contenidoId === idModeracion ||
+        (["silenciar", "bloquear"].includes(accion) &&
+          autor === publicacion.autor)
+      ) {
+        setOculto(true);
+      }
+    };
+
+    window.addEventListener(
+      "reportard_moderation_changed",
+      actualizarModeracion,
+    );
+
+    return () =>
+      window.removeEventListener(
+        "reportard_moderation_changed",
+        actualizarModeracion,
+      );
+  }, [idModeracion, publicacion.autor]);
+
   const totalReacciones =
     publicacion.reacciones + (reaccionado ? 1 : 0);
 
@@ -213,14 +284,16 @@ export default function PostCard({ publicacion }) {
     }
   };
 
+  if (oculto) return null;
+
   return (
-    <article className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.035]">
-      <header className="flex items-start gap-3 p-4">
+    <article className="group/card overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.045] to-white/[0.025] shadow-xl shadow-black/10 transition duration-300 hover:border-white/[0.16]">
+      <header className="flex items-start gap-3 border-b border-white/[0.035] p-4">
         <button
           type="button"
           onClick={abrirPerfil}
           aria-label={`Abrir perfil de ${publicacion.autor}`}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-blue-500 font-bold text-white transition hover:scale-105 active:scale-95"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-white/10 bg-gradient-to-br from-violet-500 to-blue-500 font-bold text-white shadow-lg shadow-violet-500/15 transition hover:scale-105 active:scale-95"
         >
           {publicacion.iniciales}
         </button>
@@ -250,13 +323,16 @@ export default function PostCard({ publicacion }) {
           </p>
         </div>
 
-        <button
-          type="button"
-          aria-label="Opciones de la publicación"
-          className="rounded-full p-2 text-slate-500 transition hover:bg-white/5"
-        >
-          <MoreHorizontal size={20} />
-        </button>
+        <ContentOptions
+          contenidoId={idModeracion}
+          autor={publicacion.autor}
+          tipo="publicación"
+          esPropio={esPropia}
+          onOcultar={() => setOculto(true)}
+          onEditar={() =>
+            navigate(`/publicar?editar=${publicacion.id ?? "actual"}`)
+          }
+        />
       </header>
 
       <div className="px-4 pb-4">
@@ -267,20 +343,29 @@ export default function PostCard({ publicacion }) {
 
       {publicacion.mediaUrl ? (
         publicacion.mediaTipo === "video" ? (
-          <video
-            src={publicacion.mediaUrl}
-            controls
-            className="max-h-96 w-full bg-black"
-          />
+          <div className="flex max-h-[34rem] w-full justify-center overflow-hidden bg-black">
+            <video
+              src={publicacion.mediaUrl}
+              poster={publicacion.mediaPoster}
+              controls
+              playsInline
+              preload="metadata"
+              className="max-h-[34rem] w-full object-contain"
+            />
+          </div>
         ) : (
           <img
             src={publicacion.mediaUrl}
-            alt="Contenido de la publicación"
+            alt={
+              publicacion.mediaAlt ||
+              `Contenido compartido por ${publicacion.autor}`
+            }
+            loading="lazy"
             className="max-h-96 w-full object-cover"
           />
         )
       ) : (
-        <div className="mx-4 flex h-48 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-950 to-violet-950">
+        <div className="mx-4 flex h-48 items-center justify-center overflow-hidden rounded-2xl border border-blue-400/10 bg-gradient-to-br from-blue-950 to-violet-950 shadow-inner">
           <div className="text-center text-blue-300">
             <Users size={40} className="mx-auto" />
 
