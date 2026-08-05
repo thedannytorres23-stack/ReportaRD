@@ -16,6 +16,7 @@ import {
   MoreHorizontal,
   PenLine,
   Plus,
+  Radio,
   Search,
   Sparkles,
   Trash2,
@@ -253,6 +254,7 @@ const historiasIniciales = [
     texto: "Hoy nos unimos para recuperar el parque del sector. 🌳",
     color: "from-violet-600 via-fuchsia-600 to-red-500",
     vistas: 86,
+    activo: true,
   },
   {
     id: "historia-laura",
@@ -262,6 +264,7 @@ const historiasIniciales = [
     texto: "Reporte confirmado: brigadas revisando la avenida Estrella Sadhalá.",
     color: "from-blue-600 via-cyan-500 to-emerald-500",
     vistas: 54,
+    activo: true,
   },
   {
     id: "historia-jose",
@@ -271,6 +274,7 @@ const historiasIniciales = [
     texto: "Cuando la comunidad participa, el cambio se nota. 🇩🇴",
     color: "from-amber-500 via-orange-500 to-red-600",
     vistas: 121,
+    activo: false,
   },
   {
     id: "historia-santiago",
@@ -280,6 +284,7 @@ const historiasIniciales = [
     texto: "Nueva jornada de reciclaje este sábado. ¡Te esperamos!",
     color: "from-emerald-600 via-green-500 to-cyan-500",
     vistas: 73,
+    activo: true,
   },
 ];
 
@@ -444,7 +449,7 @@ export default function Home({ onLogout }) {
               type="button"
               onClick={() => setMenuAbierto(true)}
               aria-label="Abrir menú"
-              className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/5 bg-white/[0.035] text-slate-300 transition hover:bg-white/[0.07] active:scale-95"
+              className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/5 bg-white/[0.035] text-slate-300 transition hover:bg-white/[0.07] active:scale-95 lg:invisible lg:pointer-events-none"
             >
               <Menu size={22} />
             </button>
@@ -556,10 +561,17 @@ export default function Home({ onLogout }) {
                 </p>
               </div>
 
-              <span className="flex items-center gap-1 rounded-full bg-blue-500/10 px-2.5 py-1 text-[10px] font-medium text-blue-400">
-                <Sparkles size={12} />
-                En vivo
-              </span>
+              <button
+                type="button"
+                onClick={() => navigate("/en-vivo")}
+                className="group flex items-center gap-1.5 rounded-full border border-red-500/15 bg-red-500/10 px-2.5 py-1 text-[10px] font-semibold text-red-400 transition hover:border-red-400/30 hover:bg-red-500/15 active:scale-95"
+              >
+                <span className="relative flex h-3 w-3 items-center justify-center">
+                  <span className="absolute h-3 w-3 animate-ping rounded-full bg-red-500/35 [animation-duration:1.8s]" />
+                  <Radio size={12} className="relative" />
+                </span>
+                Crear directo
+              </button>
             </div>
 
             <div className="scrollbar-none flex gap-3 overflow-x-auto px-5 pb-2">
@@ -593,6 +605,11 @@ export default function Home({ onLogout }) {
                         iniciales
                       )}
                     </span>
+
+                    <span
+                      title="Estás activo ahora"
+                      className="absolute bottom-1 right-0 h-3 w-3 rounded-full border-2 border-[#06101f] bg-green-400 shadow-[0_0_8px_rgba(74,222,128,.75)]"
+                    />
 
                     {historiasPropias.length > 1 && (
                       <span className="absolute -left-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-[#06101f] bg-violet-500 px-1 text-[9px] font-bold text-white">
@@ -635,7 +652,13 @@ export default function Home({ onLogout }) {
                       {historia.iniciales}
                     </span>
 
-                    <span className="absolute bottom-1 right-0 h-3 w-3 rounded-full border-2 border-[#06101f] bg-green-400" />
+                    {historia.activo && (
+                      <span
+                        title="Activo ahora"
+                        aria-label="Activo ahora"
+                        className="absolute bottom-1 right-0 h-3 w-3 rounded-full border-2 border-[#06101f] bg-green-400 shadow-[0_0_8px_rgba(74,222,128,.75)]"
+                      />
+                    )}
                   </span>
 
                   <span className="w-full truncate text-center text-[10px] text-slate-400 transition group-hover:text-white">

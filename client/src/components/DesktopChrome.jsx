@@ -8,6 +8,7 @@ import {
   Map,
   Megaphone,
   MessageCircle,
+  Radio,
   Search,
   ShieldCheck,
   TrendingUp,
@@ -52,6 +53,7 @@ const enlaces = [
   { texto: "Mapa ciudadano", ruta: "/mapa", icono: Map },
   { texto: "Comunidades", ruta: "/comunidades", icono: UsersRound },
   { texto: "Mensajes", ruta: "/mensajes", icono: MessageCircle },
+  { texto: "En vivo", ruta: "/en-vivo", icono: Radio },
   { texto: "Notificaciones", ruta: "/notificaciones", icono: Bell },
   { texto: "Mi perfil", ruta: "/perfil", icono: UserRound },
 ];
@@ -228,23 +230,27 @@ export default function DesktopChrome({ onLogout }) {
             onClick={() => navigate("/perfil")}
             className="mt-5 flex w-full items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.035] p-3 text-left transition hover:bg-white/[0.06]"
           >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-red-500 font-bold">
+            <span className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-visible rounded-full bg-gradient-to-br from-blue-500 to-red-500 font-bold">
               {perfil.foto ? (
                 <img
                   src={perfil.foto}
                   alt={`Foto de ${perfil.nombre}`}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full rounded-full object-cover"
                 />
               ) : (
                 iniciales
               )}
+              <span
+                title="Activo ahora"
+                className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#081424] bg-green-400 shadow-[0_0_8px_rgba(74,222,128,.75)]"
+              />
             </span>
             <span className="min-w-0 flex-1">
               <strong className="block truncate text-sm">
                 {perfil.nombre}
               </strong>
-              <span className="block truncate text-xs text-slate-500">
-                @{perfil.usuario}
+              <span className="block truncate text-xs text-green-400/80">
+                Activo ahora · @{perfil.usuario}
               </span>
             </span>
             <ChevronRight size={16} className="text-slate-600" />

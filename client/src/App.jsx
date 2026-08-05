@@ -18,6 +18,7 @@ import CommunityDetail from "./pages/CommunityDetail";
 import Messages from "./pages/Messages";
 import ContentDetail from "./pages/ContentDetail";
 import DesktopChrome from "./components/DesktopChrome";
+import Live from "./pages/Live";
 
 export default function App() {
   const [autenticado, setAutenticado] = useState(() => {
@@ -94,6 +95,8 @@ export default function App() {
           />
 
           <Route path="/mensajes" element={protegerRuta(<Messages />)} />
+
+          <Route path="/en-vivo" element={protegerRuta(<Live />)} />
 
           <Route
             path="/publicacion/:id"
