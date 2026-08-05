@@ -17,6 +17,7 @@ import UserProfile from "./pages/UserProfile";
 import CommunityDetail from "./pages/CommunityDetail";
 import Messages from "./pages/Messages";
 import ContentDetail from "./pages/ContentDetail";
+import DesktopChrome from "./components/DesktopChrome";
 
 export default function App() {
   const [autenticado, setAutenticado] = useState(() => {
@@ -40,9 +41,10 @@ export default function App() {
   return (
     <>
       <div
+        data-reportard-main
         className={
           autenticado
-            ? "min-h-screen bg-slate-950 pb-24"
+            ? "min-h-screen bg-slate-950 pb-24 lg:pb-0 lg:pl-72 xl:pr-80"
             : "min-h-screen bg-slate-950"
         }
       >
@@ -139,6 +141,7 @@ export default function App() {
       </div>
 
       {autenticado && <BottomNav />}
+      {autenticado && <DesktopChrome onLogout={cerrarSesion} />}
     </>
   );
 }

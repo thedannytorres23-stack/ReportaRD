@@ -39,12 +39,12 @@ export default function BottomNav() {
           type="button"
           onClick={() => setAccionesAbiertas(false)}
           aria-label="Cerrar acciones"
-          className="fixed inset-0 z-40 bg-black/45 backdrop-blur-[2px]"
+          className="fixed inset-0 z-40 bg-black/45 backdrop-blur-[2px] lg:hidden"
         />
       )}
 
       <div
-        className={`pointer-events-none fixed bottom-[5.8rem] left-1/2 z-[60] h-28 w-full max-w-sm -translate-x-1/2 transition ${
+        className={`pointer-events-none fixed bottom-[5.8rem] left-1/2 z-[60] h-28 w-full max-w-sm -translate-x-1/2 transition lg:hidden ${
           accionesAbiertas ? "visible" : "invisible"
         }`}
       >
@@ -89,7 +89,7 @@ export default function BottomNav() {
         </Accion>
       </div>
 
-      <nav className="fixed bottom-0 left-1/2 z-50 flex w-full max-w-md -translate-x-1/2 items-center justify-around border-t border-white/10 bg-[#06101f]/95 px-3 pb-4 pt-3 text-white shadow-2xl shadow-black/40 backdrop-blur-xl">
+      <nav className="fixed bottom-0 left-1/2 z-50 flex w-full max-w-md -translate-x-1/2 items-center justify-around border-t border-white/10 bg-[#06101f]/95 px-3 pb-4 pt-3 text-white shadow-2xl shadow-black/40 backdrop-blur-xl lg:hidden">
         <Navegacion
           texto="Inicio"
           activo={estaActivo("/")}
