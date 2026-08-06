@@ -7,16 +7,22 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useNavigate } from "react-router";
+import {
+  iniciarSesion as iniciarSesionAPI,
+} from "../services/authService";
 
 export default function Login({ onLogin }) {
   const navigate = useNavigate();
 
   const [formulario, setFormulario] = useState({
-    correo: "",
-    contraseña: "",
+    identificador: "",
+    contrasena: "",
   });
 
-  const [mostrarContraseña, setMostrarContraseña] = useState(false);
+  const [mostrarContrasena, setMostrarContrasena] =
+    useState(false);
+
+  const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
 
   const actualizarCampo = (event) => {
@@ -30,26 +36,71 @@ export default function Login({ onLogin }) {
     setError("");
   };
 
-  const iniciarSesion = (event) => {
+  const manejarInicioSesion = async (event) => {
     event.preventDefault();
 
-    if (!formulario.correo.trim() || !formulario.contraseña.trim()) {
+    if (
+      !formulario.identificador.trim() ||
+      !formulario.contrasena.trim()
+    ) {
       setError("Completa todos los campos.");
       return;
     }
 
-    if (!formulario.correo.includes("@")) {
-      setError("Introduce un correo electrónico válido.");
+    if (formulario.contrasena.length < 8) {
+      setError(
+        "La contraseña debe tener al menos 8 caracteres.",
+      );
       return;
     }
 
-    if (formulario.contraseña.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres.");
-      return;
-    }
+    try {
+      setCargando(true);
+      setError("");
 
-    onLogin();
-    navigate("/", { replace: true });
+      const respuesta = await iniciarSesionAPI({
+        identificador: formulario.identificador.trim(),
+        contrasena: formulario.contrasena,
+      });
+
+      const perfilGuardado = {
+        nombre: respuesta.usuario.nombre,
+        usuario: respuesta.usuario.usuario,
+        correo: respuesta.usuario.correo,
+        telefono: respuesta.usuario.telefono || "",
+        foto: respuesta.usuario.foto || "",
+        portada: respuesta.usuario.portada || "",
+        bio: respuesta.usuario.biografia || "",
+        ubicacion:
+          respuesta.usuario.ubicacion ||
+          "República Dominicana",
+      };
+
+      localStorage.setItem(
+        "reportard_token",
+        respuesta.token,
+      );
+
+      localStorage.setItem(
+        "reportard_user",
+        JSON.stringify(respuesta.usuario),
+      );
+
+      localStorage.setItem(
+        "reportard_profile",
+        JSON.stringify(perfilGuardado),
+      );
+
+      onLogin();
+      navigate("/", { replace: true });
+    } catch (errorInicio) {
+      setError(
+        errorInicio.message ||
+          "No se pudo iniciar sesión.",
+      );
+    } finally {
+      setCargando(false);
+    }
   };
 
   return (
@@ -62,7 +113,8 @@ export default function Login({ onLogin }) {
             </div>
 
             <h1 className="text-3xl font-bold">
-              Reporta<span className="text-red-500">RD</span>
+              Reporta
+              <span className="text-red-500">RD</span>
             </h1>
 
             <h2 className="mt-5 text-2xl font-bold">
@@ -70,18 +122,18 @@ export default function Login({ onLogin }) {
             </h2>
 
             <p className="mt-2 leading-6 text-slate-400">
-              Inicia sesión para participar, conectar con tu comunidad y dar
-              seguimiento a tus reportes.
+              Inicia sesión para participar, conectar con tu
+              comunidad y dar seguimiento a tus reportes.
             </p>
           </div>
 
-          <form onSubmit={iniciarSesion}>
+          <form onSubmit={manejarInicioSesion}>
             <div>
               <label
-                htmlFor="correo"
+                htmlFor="identificador"
                 className="mb-2 block text-sm font-medium text-slate-300"
               >
-                Correo electrónico
+                Correo o nombre de usuario
               </label>
 
               <div className="relative">
@@ -91,14 +143,15 @@ export default function Login({ onLogin }) {
                 />
 
                 <input
-                  id="correo"
-                  type="email"
-                  name="correo"
-                  value={formulario.correo}
+                  id="identificador"
+                  type="text"
+                  name="identificador"
+                  value={formulario.identificador}
                   onChange={actualizarCampo}
-                  placeholder="nombre@correo.com"
-                  autoComplete="email"
-                  className="w-full rounded-2xl border border-white/10 bg-white/[0.04] py-4 pl-12 pr-4 text-white outline-none transition placeholder:text-slate-600 focus:border-red-500"
+                  placeholder="correo@ejemplo.com o usuario"
+                  autoComplete="username"
+                  disabled={cargando}
+                  className="w-full rounded-2xl border border-white/10 bg-white/[0.04] py-4 pl-12 pr-4 text-white outline-none transition placeholder:text-slate-600 focus:border-red-500 disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
             </div>
@@ -106,7 +159,7 @@ export default function Login({ onLogin }) {
             <div className="mt-5">
               <div className="mb-2 flex items-center justify-between">
                 <label
-                  htmlFor="contraseña"
+                  htmlFor="contrasena"
                   className="text-sm font-medium text-slate-300"
                 >
                   Contraseña
@@ -127,27 +180,35 @@ export default function Login({ onLogin }) {
                 />
 
                 <input
-                  id="contraseña"
-                  type={mostrarContraseña ? "text" : "password"}
-                  name="contraseña"
-                  value={formulario.contraseña}
+                  id="contrasena"
+                  type={
+                    mostrarContrasena ? "text" : "password"
+                  }
+                  name="contrasena"
+                  value={formulario.contrasena}
                   onChange={actualizarCampo}
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Mínimo 8 caracteres"
                   autoComplete="current-password"
-                  className="w-full rounded-2xl border border-white/10 bg-white/[0.04] py-4 pl-12 pr-12 text-white outline-none transition placeholder:text-slate-600 focus:border-red-500"
+                  disabled={cargando}
+                  className="w-full rounded-2xl border border-white/10 bg-white/[0.04] py-4 pl-12 pr-12 text-white outline-none transition placeholder:text-slate-600 focus:border-red-500 disabled:cursor-not-allowed disabled:opacity-60"
                 />
 
                 <button
                   type="button"
-                  onClick={() => setMostrarContraseña((estado) => !estado)}
+                  onClick={() =>
+                    setMostrarContrasena(
+                      (estadoActual) => !estadoActual,
+                    )
+                  }
+                  disabled={cargando}
                   aria-label={
-                    mostrarContraseña
+                    mostrarContrasena
                       ? "Ocultar contraseña"
                       : "Mostrar contraseña"
                   }
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"
                 >
-                  {mostrarContraseña ? (
+                  {mostrarContrasena ? (
                     <EyeOff size={20} />
                   ) : (
                     <Eye size={20} />
@@ -157,36 +218,47 @@ export default function Login({ onLogin }) {
             </div>
 
             {error && (
-              <p className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+              <p
+                role="alert"
+                className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300"
+              >
                 {error}
               </p>
             )}
 
             <button
               type="submit"
-              className="mt-7 w-full rounded-2xl bg-red-500 px-6 py-4 font-semibold shadow-lg shadow-red-500/20 transition active:scale-[0.98]"
+              disabled={cargando}
+              className="mt-7 w-full rounded-2xl bg-red-500 px-6 py-4 font-semibold shadow-lg shadow-red-500/20 transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Iniciar sesión
+              {cargando
+                ? "Verificando..."
+                : "Iniciar sesión"}
             </button>
           </form>
 
           <div className="my-7 flex items-center gap-4">
             <div className="h-px flex-1 bg-white/10" />
-            <span className="text-xs text-slate-500">¿Eres nuevo?</span>
+
+            <span className="text-xs text-slate-500">
+              ¿Eres nuevo?
+            </span>
+
             <div className="h-px flex-1 bg-white/10" />
           </div>
 
           <button
             type="button"
             onClick={() => navigate("/registro")}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-4 font-semibold text-slate-200 transition active:scale-[0.98]"
+            disabled={cargando}
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-4 font-semibold text-slate-200 transition active:scale-[0.98] disabled:opacity-60"
           >
             Crear una cuenta
           </button>
 
           <p className="mt-7 text-center text-xs leading-5 text-slate-500">
-            Al continuar aceptas las normas comunitarias y las políticas de
-            ReportaRD.
+            Al continuar aceptas las normas comunitarias y las
+            políticas de ReportaRD.
           </p>
         </section>
       </main>

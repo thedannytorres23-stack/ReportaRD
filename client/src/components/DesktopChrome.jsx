@@ -586,7 +586,6 @@ function RedDeEnergia({ ruta, reducirMovimiento }) {
 
   useLayoutEffect(() => {
     if (reducirMovimiento || window.innerWidth < 1024) {
-      setRed(null);
       return undefined;
     }
 
@@ -643,7 +642,9 @@ function RedDeEnergia({ ruta, reducirMovimiento }) {
     };
   }, [ruta, reducirMovimiento]);
 
-  if (!red) return null;
+  if (reducirMovimiento || window.innerWidth < 1024 || !red) {
+    return null;
+  }
 
   const cables = [...red.izquierda, ...red.derecha];
 

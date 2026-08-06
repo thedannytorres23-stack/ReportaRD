@@ -354,15 +354,23 @@ export default function Home({ onLogout }) {
     const parametros = new URLSearchParams(location.search);
 
     if (parametros.get("crearHistoria") === "1") {
-      setMostrarCrearHistoria(true);
-      navigate("/", { replace: true });
+      const frame = window.requestAnimationFrame(() => {
+        setMostrarCrearHistoria(true);
+        navigate("/", { replace: true });
+      });
+
+      return () => window.cancelAnimationFrame(frame);
     }
+
+    return undefined;
   }, [location.search, navigate]);
 
   useEffect(() => {
     if (historiaActiva === null) return undefined;
 
-    setProgresoHistoria(0);
+    const frame = window.requestAnimationFrame(() => {
+      setProgresoHistoria(0);
+    });
 
     const intervalo = window.setInterval(() => {
       setProgresoHistoria((progresoActual) => {
@@ -380,7 +388,10 @@ export default function Home({ onLogout }) {
       });
     }, 60);
 
-    return () => window.clearInterval(intervalo);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearInterval(intervalo);
+    };
   }, [historiaActiva, historias.length]);
 
   const crearHistoria = () => {

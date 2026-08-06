@@ -8,6 +8,9 @@ import {
   UserRound,
 } from "lucide-react";
 import { useNavigate } from "react-router";
+import {
+  registrarUsuario as registrarUsuarioAPI,
+} from "../services/authService";
 
 export default function Register({ onRegister }) {
   const navigate = useNavigate();
@@ -17,10 +20,11 @@ export default function Register({ onRegister }) {
     usuario: "",
     correo: "",
     telefono: "",
-    contraseña: "",
+    contrasena: "",
   });
 
   const [error, setError] = useState("");
+  const [cargando, setCargando] = useState(false);
 
   const actualizarCampo = (event) => {
     const { name, value } = event.target;
@@ -33,7 +37,7 @@ export default function Register({ onRegister }) {
     setError("");
   };
 
-  const registrarUsuario = (event) => {
+  const manejarRegistro = async (event) => {
     event.preventDefault();
 
     const camposIncompletos = Object.values(formulario).some(
@@ -50,13 +54,76 @@ export default function Register({ onRegister }) {
       return;
     }
 
-    if (formulario.contraseña.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres.");
+    if (formulario.usuario.includes(" ")) {
+      setError(
+        "El nombre de usuario no puede contener espacios.",
+      );
       return;
     }
 
-    onRegister();
-    navigate("/", { replace: true });
+    if (formulario.usuario.length < 3) {
+      setError(
+        "El nombre de usuario debe tener al menos 3 caracteres.",
+      );
+      return;
+    }
+
+    if (formulario.contrasena.length < 8) {
+      setError(
+        "La contraseña debe tener al menos 8 caracteres.",
+      );
+      return;
+    }
+
+    try {
+      setCargando(true);
+      setError("");
+
+      const respuesta = await registrarUsuarioAPI({
+        nombre: formulario.nombre.trim(),
+        usuario: formulario.usuario.trim(),
+        correo: formulario.correo.trim(),
+        contrasena: formulario.contrasena,
+      });
+
+      const perfilGuardado = {
+        nombre: respuesta.usuario.nombre,
+        usuario: respuesta.usuario.usuario,
+        correo: respuesta.usuario.correo,
+        telefono: formulario.telefono.trim(),
+        foto: respuesta.usuario.foto || "",
+        portada: respuesta.usuario.portada || "",
+        bio: respuesta.usuario.biografia || "",
+        ubicacion:
+          respuesta.usuario.ubicacion ||
+          "República Dominicana",
+      };
+
+      localStorage.setItem(
+        "reportard_token",
+        respuesta.token,
+      );
+
+      localStorage.setItem(
+        "reportard_user",
+        JSON.stringify(respuesta.usuario),
+      );
+
+      localStorage.setItem(
+        "reportard_profile",
+        JSON.stringify(perfilGuardado),
+      );
+
+      onRegister();
+      navigate("/", { replace: true });
+    } catch (errorRegistro) {
+      setError(
+        errorRegistro.message ||
+          "No se pudo crear la cuenta.",
+      );
+    } finally {
+      setCargando(false);
+    }
   };
 
   const campos = [
@@ -67,6 +134,7 @@ export default function Register({ onRegister }) {
       etiqueta: "Nombre y apellido",
       placeholder: "Tu nombre completo",
       icono: UserRound,
+      autocompletar: "name",
     },
     {
       id: "usuario",
@@ -75,6 +143,7 @@ export default function Register({ onRegister }) {
       etiqueta: "Nombre de usuario",
       placeholder: "Tu nombre de usuario",
       icono: AtSign,
+      autocompletar: "username",
     },
     {
       id: "correo",
@@ -83,6 +152,7 @@ export default function Register({ onRegister }) {
       etiqueta: "Correo electrónico",
       placeholder: "nombre@correo.com",
       icono: Mail,
+      autocompletar: "email",
     },
     {
       id: "telefono",
@@ -91,14 +161,16 @@ export default function Register({ onRegister }) {
       etiqueta: "Número de teléfono",
       placeholder: "809-000-0000",
       icono: Phone,
+      autocompletar: "tel",
     },
     {
-      id: "contraseña",
-      nombre: "contraseña",
+      id: "contrasena",
+      nombre: "contrasena",
       tipo: "password",
       etiqueta: "Contraseña",
-      placeholder: "Mínimo 6 caracteres",
+      placeholder: "Mínimo 8 caracteres",
       icono: LockKeyhole,
+      autocompletar: "new-password",
     },
   ];
 
@@ -108,7 +180,8 @@ export default function Register({ onRegister }) {
         <button
           type="button"
           onClick={() => navigate("/login")}
-          className="flex items-center gap-2 text-sm text-slate-400"
+          disabled={cargando}
+          className="flex items-center gap-2 text-sm text-slate-400 disabled:opacity-60"
         >
           <ArrowLeft size={20} />
           Volver
@@ -124,11 +197,14 @@ export default function Register({ onRegister }) {
           </h1>
 
           <p className="mt-3 leading-6 text-slate-400">
-            Identifícate para participar, conectar con tu comunidad y publicar
-            reportes responsables.
+            Identifícate para participar, conectar con tu
+            comunidad y publicar reportes responsables.
           </p>
 
-          <form onSubmit={registrarUsuario} className="mt-8">
+          <form
+            onSubmit={manejarRegistro}
+            className="mt-8"
+          >
             <div className="space-y-5">
               {campos.map(
                 ({
@@ -138,6 +214,7 @@ export default function Register({ onRegister }) {
                   etiqueta,
                   placeholder,
                   icono: Icono,
+                  autocompletar,
                 }) => (
                   <div key={id}>
                     <label
@@ -160,7 +237,9 @@ export default function Register({ onRegister }) {
                         value={formulario[nombre]}
                         onChange={actualizarCampo}
                         placeholder={placeholder}
-                        className="w-full rounded-2xl border border-white/10 bg-white/[0.04] py-4 pl-12 pr-4 text-white outline-none transition placeholder:text-slate-600 focus:border-red-500"
+                        autoComplete={autocompletar}
+                        disabled={cargando}
+                        className="w-full rounded-2xl border border-white/10 bg-white/[0.04] py-4 pl-12 pr-4 text-white outline-none transition placeholder:text-slate-600 focus:border-red-500 disabled:cursor-not-allowed disabled:opacity-60"
                       />
                     </div>
                   </div>
@@ -169,7 +248,10 @@ export default function Register({ onRegister }) {
             </div>
 
             {error && (
-              <p className="mt-5 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+              <p
+                role="alert"
+                className="mt-5 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300"
+              >
                 {error}
               </p>
             )}
@@ -178,20 +260,24 @@ export default function Register({ onRegister }) {
               <input
                 type="checkbox"
                 required
+                disabled={cargando}
                 className="mt-1 accent-red-500"
               />
 
               <span>
-                Acepto las normas comunitarias y me comprometo a publicar
-                información responsable.
+                Acepto las normas comunitarias y me comprometo
+                a publicar información responsable.
               </span>
             </label>
 
             <button
               type="submit"
-              className="mt-7 w-full rounded-2xl bg-red-500 px-6 py-4 font-semibold shadow-lg shadow-red-500/20 transition active:scale-[0.98]"
+              disabled={cargando}
+              className="mt-7 w-full rounded-2xl bg-red-500 px-6 py-4 font-semibold shadow-lg shadow-red-500/20 transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Crear cuenta
+              {cargando
+                ? "Creando cuenta..."
+                : "Crear cuenta"}
             </button>
           </form>
         </section>
