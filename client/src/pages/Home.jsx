@@ -191,24 +191,25 @@ const contenidoFeed = [
   },
 ];
 
-const perfilInicial = {
-  nombre: "Danny Torres",
-  usuario: "dannytorres",
+const usuarioVacio = {
+  nombre: "Usuario",
+  usuario: "usuario",
   foto: "",
+  ubicacion: "República Dominicana",
 };
 
-const obtenerPerfilGuardado = () => {
+const obtenerUsuarioAutenticado = () => {
   try {
-    const datos = localStorage.getItem("reportard_profile");
+    const datos = localStorage.getItem("reportard_user");
 
     return datos
       ? {
-        ...perfilInicial,
+        ...usuarioVacio,
         ...JSON.parse(datos),
       }
-      : perfilInicial;
+      : usuarioVacio;
   } catch {
-    return perfilInicial;
+    return usuarioVacio;
   }
 };
 
@@ -289,12 +290,16 @@ export default function Home({ onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [perfil] = useState(obtenerPerfilGuardado);
+  const [perfil] = useState(obtenerUsuarioAutenticado);
 
   const primerNombre =
     perfil.nombre.trim().split(/\s+/)[0] || "Usuario";
 
   const iniciales = obtenerIniciales(perfil.nombre);
+
+  const ubicacionPrincipal =
+    perfil.ubicacion?.split(",")[0]?.trim() ||
+    "República Dominicana";
 
   const [menuAbierto, setMenuAbierto] = useState(false);
 
@@ -505,7 +510,7 @@ export default function Home({ onLogout }) {
                       size={12}
                       className="text-red-400"
                     />
-                    Santiago
+                    {ubicacionPrincipal}
                   </span>
                 </div>
 

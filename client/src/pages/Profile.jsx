@@ -1,78 +1,43 @@
 import { useState } from "react";
 import {
+  Activity,
   ArrowLeft,
-  Award,
   Bookmark,
+  CalendarDays,
   CheckCircle2,
   MapPin,
   Pencil,
   Settings,
   ShieldCheck,
-  Users,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 
-const perfilInicial = {
-  nombre: "Danny Torres",
-  usuario: "dannytorres",
-  biografia:
-    "Ciudadano de Santiago interesado en la tecnología y en contribuir al desarrollo de su comunidad.",
-  ubicacion: "Santiago, República Dominicana",
+const usuarioVacio = {
+  nombre: "Usuario",
+  usuario: "usuario",
+  biografia: "",
+  ubicacion: "República Dominicana",
   foto: "",
   portada: "",
+  activo: false,
+  rol: "usuario",
+  createdAt: null,
 };
 
-const publicaciones = [
-  {
-    id: 1,
-    tipo: "reporte",
-    titulo: "Fuga de agua en la calle principal",
-    estado: "En revisión",
-    fecha: "Hace 2 días",
-    interacciones: "28 confirmaciones",
-  },
-  {
-    id: 2,
-    tipo: "publicacion",
-    titulo: "Jornada de limpieza comunitaria",
-    estado: "Publicación",
-    fecha: "Hace 5 días",
-    interacciones: "42 reacciones",
-  },
-  {
-    id: 3,
-    tipo: "reporte",
-    titulo: "Lámpara averiada frente al parque",
-    estado: "Resuelto",
-    fecha: "Hace 1 semana",
-    interacciones: "19 confirmaciones",
-  },
-];
+const publicaciones = [];
 
-const obtenerPerfilGuardado = () => {
+const obtenerUsuarioAutenticado = () => {
   try {
-    const datos = localStorage.getItem("reportard_profile");
+    const datos = localStorage.getItem("reportard_user");
 
     return datos
       ? {
-          ...perfilInicial,
+          ...usuarioVacio,
           ...JSON.parse(datos),
         }
-      : perfilInicial;
+      : usuarioVacio;
   } catch {
-    return perfilInicial;
-  }
-};
-
-const obtenerTotalSeguidos = () => {
-  try {
-    const datos = localStorage.getItem(
-      "reportard_usuarios_seguidos",
-    );
-
-    return datos ? JSON.parse(datos).length : 0;
-  } catch {
-    return 0;
+    return usuarioVacio;
   }
 };
 
@@ -88,13 +53,33 @@ const obtenerIniciales = (nombre) => {
 export default function Profile() {
   const navigate = useNavigate();
 
-  const [perfil] = useState(obtenerPerfilGuardado);
+  const [perfil] = useState(obtenerUsuarioAutenticado);
 
   const [seccionActiva, setSeccionActiva] =
     useState("publicaciones");
 
-  const totalSeguidos = obtenerTotalSeguidos();
   const iniciales = obtenerIniciales(perfil.nombre);
+
+  const estadisticas = {
+    seguidores: perfil.totalSeguidores ?? 0,
+    siguiendo: perfil.totalSiguiendo ?? 0,
+    comunidades: perfil.totalComunidades ?? 0,
+    reportes: perfil.totalReportes ?? 0,
+  };
+
+  const fechaRegistro = perfil.createdAt
+    ? new Intl.DateTimeFormat("es-DO", {
+        month: "long",
+        year: "numeric",
+      }).format(new Date(perfil.createdAt))
+    : "Fecha no disponible";
+
+  const nombreRol =
+    perfil.rol === "administrador"
+      ? "Administrador"
+      : perfil.rol === "moderador"
+        ? "Moderador"
+        : "Ciudadano";
 
   const contenidoVisible = publicaciones.filter((elemento) => {
     if (seccionActiva === "publicaciones") {
@@ -173,12 +158,14 @@ export default function Profile() {
                   {perfil.nombre}
                 </h1>
 
-                <CheckCircle2
-                  size={20}
-                  className="text-blue-400"
-                  fill="currentColor"
-                  strokeWidth={3}
-                />
+                {perfil.rol !== "usuario" && (
+                  <CheckCircle2
+                    size={20}
+                    className="text-blue-400"
+                    fill="currentColor"
+                    strokeWidth={3}
+                  />
+                )}
               </div>
 
               <p className="mt-1 text-sm text-slate-500">
@@ -210,7 +197,7 @@ export default function Profile() {
                 className="transition hover:text-blue-400"
               >
                 <strong className="block text-lg">
-                  128
+                  {estadisticas.seguidores}
                 </strong>
 
                 <span className="text-[10px] text-slate-500">
@@ -226,7 +213,7 @@ export default function Profile() {
                 className="transition hover:text-blue-400"
               >
                 <strong className="block text-lg">
-                  {totalSeguidos}
+                  {estadisticas.siguiendo}
                 </strong>
 
                 <span className="text-[10px] text-slate-500">
@@ -236,7 +223,7 @@ export default function Profile() {
 
               <button type="button">
                 <strong className="block text-lg">
-                  6
+                  {estadisticas.comunidades}
                 </strong>
 
                 <span className="text-[10px] text-slate-500">
@@ -246,7 +233,7 @@ export default function Profile() {
 
               <button type="button">
                 <strong className="block text-lg">
-                  14
+                  {estadisticas.reportes}
                 </strong>
 
                 <span className="text-[10px] text-slate-500">
@@ -261,45 +248,44 @@ export default function Profile() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-blue-400">
-                Impacto ciudadano
+                Identidad ciudadana
               </p>
 
               <h2 className="mt-2 text-xl font-bold">
-                Nivel 4 · Colaborador
+                {nombreRol}
               </h2>
             </div>
 
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500/15 text-amber-400">
-              <Award size={23} />
+            <div
+              className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
+                perfil.activo
+                  ? "bg-green-500/15 text-green-400"
+                  : "bg-slate-500/15 text-slate-400"
+              }`}
+            >
+              <Activity size={23} />
             </div>
           </div>
 
-          <div className="mt-5">
-            <div className="flex justify-between text-xs text-slate-400">
-              <span>780 XP</span>
-              <span>1200 XP</span>
-            </div>
-
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
-              <div className="h-full w-[65%] rounded-full bg-gradient-to-r from-blue-500 to-red-500" />
-            </div>
-          </div>
-
-          <div className="mt-5 flex gap-3">
-            <div className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 text-xs text-slate-300">
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-3 text-xs text-slate-300">
               <ShieldCheck
                 size={16}
-                className="text-green-400"
+                className={
+                  perfil.activo
+                    ? "text-green-400"
+                    : "text-slate-500"
+                }
               />
-              Verificador
+              {perfil.activo ? "Cuenta activa" : "Cuenta inactiva"}
             </div>
 
-            <div className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 text-xs text-slate-300">
-              <Users
+            <div className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-3 text-xs text-slate-300">
+              <CalendarDays
                 size={16}
                 className="text-blue-400"
               />
-              Líder comunitario
+              Desde {fechaRegistro}
             </div>
           </div>
         </section>
@@ -361,6 +347,48 @@ export default function Profile() {
                 <p className="mt-2 text-sm text-slate-500">
                   Las publicaciones que guardes aparecerán aquí.
                 </p>
+              </div>
+            ) : contenidoVisible.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-white/10 px-5 py-10 text-center">
+                {seccionActiva === "reportes" ? (
+                  <MapPin
+                    size={32}
+                    className="mx-auto text-slate-600"
+                  />
+                ) : (
+                  <Pencil
+                    size={32}
+                    className="mx-auto text-slate-600"
+                  />
+                )}
+
+                <h3 className="mt-4 font-semibold">
+                  {seccionActiva === "reportes"
+                    ? "Todavía no has creado reportes"
+                    : "Todavía no has publicado contenido"}
+                </h3>
+
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  {seccionActiva === "reportes"
+                    ? "Tus reportes reales aparecerán aquí cuando los conectemos con el backend."
+                    : "Tus publicaciones reales aparecerán aquí cuando las conectemos con el backend."}
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(
+                      seccionActiva === "reportes"
+                        ? "/reportar"
+                        : "/publicar",
+                    )
+                  }
+                  className="mt-5 rounded-2xl bg-red-500 px-5 py-2.5 text-sm font-semibold text-white transition active:scale-[0.98]"
+                >
+                  {seccionActiva === "reportes"
+                    ? "Crear reporte"
+                    : "Crear publicación"}
+                </button>
               </div>
             ) : (
               contenidoVisible.map((elemento) => (
