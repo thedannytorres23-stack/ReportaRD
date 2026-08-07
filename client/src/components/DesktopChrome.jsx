@@ -1,5 +1,7 @@
 import { useLayoutEffect, useState } from "react";
 import {
+  Activity,
+  ArrowUpRight,
   Bell,
   ChevronRight,
   CirclePlus,
@@ -11,6 +13,7 @@ import {
   Radio,
   Search,
   ShieldCheck,
+  Sparkles,
   TrendingUp,
   UserRound,
   UsersRound,
@@ -59,15 +62,51 @@ const enlaces = [
 ];
 
 const tendencias = [
-  { tema: "Alumbrado público", cantidad: "38 reportes" },
-  { tema: "Calles de Santiago", cantidad: "24 publicaciones" },
-  { tema: "Jornadas comunitarias", cantidad: "17 conversaciones" },
+  {
+    tema: "Alumbrado público",
+    cantidad: "38 reportes",
+    crecimiento: "+18%",
+    nivel: 86,
+    color: "from-amber-400 to-orange-500",
+  },
+  {
+    tema: "Calles de Santiago",
+    cantidad: "24 publicaciones",
+    crecimiento: "+11%",
+    nivel: 67,
+    color: "from-red-400 to-rose-500",
+  },
+  {
+    tema: "Jornadas comunitarias",
+    cantidad: "17 conversaciones",
+    crecimiento: "+8%",
+    nivel: 49,
+    color: "from-blue-400 to-violet-500",
+  },
 ];
 
 const comunidades = [
-  { nombre: "Santiago Centro", miembros: "2.4 mil", iniciales: "SC" },
-  { nombre: "Los Jardines", miembros: "986", iniciales: "LJ" },
-  { nombre: "Cienfuegos", miembros: "1.3 mil", iniciales: "CF" },
+  {
+    nombre: "Santiago Centro",
+    miembros: "2.4 mil",
+    iniciales: "SC",
+    actividad: "126 activos",
+    color: "from-blue-500 to-cyan-400",
+  },
+  {
+    nombre: "Los Jardines",
+    miembros: "986",
+    iniciales: "LJ",
+    actividad: "74 activos",
+    color: "from-violet-500 to-fuchsia-400",
+  },
+  {
+    nombre: "Cienfuegos",
+    miembros: "1.3 mil",
+    iniciales: "CF",
+    actividad: "91 activos",
+    color: "from-emerald-500 to-teal-400",
+  },
 ];
 
 export default function DesktopChrome({ onLogout }) {
@@ -141,50 +180,49 @@ export default function DesktopChrome({ onLogout }) {
     <>
       <style>{`
         @media (min-width: 1024px) {
+          html,
+          body,
+          [data-reportard-main],
+          .reportard-scrollbar {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+          }
+
+          html::-webkit-scrollbar,
+          body::-webkit-scrollbar,
+          [data-reportard-main]::-webkit-scrollbar,
+          .reportard-scrollbar::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+          }
+
+          .reportard-scrollbar {
+            overscroll-behavior: contain;
+          }
+
           [data-reportard-main] .max-w-md {
             max-width: 32rem !important;
-            animation: reportard-central-float 12s linear infinite;
             box-shadow: 0 24px 80px rgba(0, 0, 0, .24);
-            will-change: transform;
-            transform-style: preserve-3d;
           }
 
-          [data-reportard-left] {
-            animation: reportard-left-float 10s linear infinite;
-            will-change: transform;
-          }
-
+          [data-reportard-left],
           [data-reportard-right] {
-            animation: reportard-right-float 11.5s linear infinite;
-            will-change: transform;
+            contain: layout paint;
           }
-        }
 
-        @keyframes reportard-central-float {
-          0%, 100% { transform: translate3d(0, 0, 0) rotateX(0deg); }
-          25% { transform: translate3d(0, -3px, 0) rotateX(.12deg); }
-          50% { transform: translate3d(0, 0, 0) rotateX(0deg); }
-          75% { transform: translate3d(0, 3px, 0) rotateX(-.12deg); }
-        }
-
-        @keyframes reportard-left-float {
-          0%, 100% { transform: translate3d(0, 0, 0); }
-          25% { transform: translate3d(1px, -3px, 0); }
-          50% { transform: translate3d(0, 0, 0); }
-          75% { transform: translate3d(-1px, 3px, 0); }
-        }
-
-        @keyframes reportard-right-float {
-          0%, 100% { transform: translate3d(0, 0, 0); }
-          25% { transform: translate3d(-1px, 3px, 0); }
-          50% { transform: translate3d(0, 0, 0); }
-          75% { transform: translate3d(1px, -3px, 0); }
+          [data-reportard-left],
+          [data-reportard-right],
+          [data-reportard-right] .backdrop-blur-xl {
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+          }
         }
 
         @media (prefers-reduced-motion: reduce) {
-          [data-reportard-main] .max-w-md,
-          [data-reportard-left],
-          [data-reportard-right] { animation: none !important; }
+          *, *::before, *::after {
+            scroll-behavior: auto !important;
+          }
         }
       `}</style>
 
@@ -209,55 +247,117 @@ export default function DesktopChrome({ onLogout }) {
           opacity: { duration: 0.35 },
         }}
         data-reportard-left
-        className="fixed bottom-4 left-4 top-4 z-40 hidden w-64 flex-col overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#081424]/95 text-white shadow-2xl shadow-black/30 backdrop-blur-xl lg:flex xl:left-[calc(50%_-_36rem)]"
+        className="fixed bottom-4 left-4 top-4 z-40 hidden w-64 flex-col overflow-hidden rounded-[1.9rem] border border-blue-400/15 bg-gradient-to-b from-[#0b1b31]/98 via-[#081525]/98 to-[#07111f]/98 text-white shadow-[0_24px_80px_rgba(0,0,0,.38),0_0_45px_rgba(37,99,235,.07)] backdrop-blur-xl lg:flex xl:left-[calc(50%_-_36rem)]"
       >
-        <header className="border-b border-white/10 px-5 py-5">
+        <div className="pointer-events-none absolute -left-16 -top-20 h-56 w-56 rounded-full bg-blue-500/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -right-16 h-52 w-52 rounded-full bg-red-500/[0.07] blur-3xl" />
+        <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-blue-400/60 to-transparent" />
+
+        <header className="relative border-b border-white/[0.07] px-5 pb-5 pt-6">
           <button
             type="button"
             onClick={() => navigate("/")}
-            className="text-left"
+            className="group flex items-center gap-3 text-left"
           >
-            <span className="text-xl font-black tracking-tight">
-              Reporta<span className="text-red-500">RD</span>
-            </span>
-            <span className="mt-0.5 block text-[9px] font-semibold tracking-[0.28em] text-slate-600">
-              RED CIUDADANA
-            </span>
-          </button>
+            <motion.span
+              animate={
+                reducirMovimiento
+                  ? undefined
+                  : {
+                      boxShadow: [
+                        "0 0 0 rgba(59,130,246,0)",
+                        "0 0 24px rgba(59,130,246,.3)",
+                        "0 0 0 rgba(59,130,246,0)",
+                      ],
+                    }
+              }
+              transition={{ duration: 3, repeat: Infinity }}
+              className="flex h-10 w-10 items-center justify-center rounded-2xl border border-blue-300/20 bg-gradient-to-br from-blue-500/25 to-violet-500/15 text-blue-300"
+            >
+              <Sparkles size={19} />
+            </motion.span>
 
-          <button
-            type="button"
-            onClick={() => navigate("/perfil")}
-            className="mt-5 flex w-full items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.035] p-3 text-left transition hover:bg-white/[0.06]"
-          >
-            <span className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-visible rounded-full bg-gradient-to-br from-blue-500 to-red-500 font-bold">
-              {perfil.foto ? (
-                <img
-                  src={perfil.foto}
-                  alt={`Foto de ${perfil.nombre}`}
-                  className="h-full w-full rounded-full object-cover"
-                />
-              ) : (
-                iniciales
-              )}
-              <span
-                title="Activo ahora"
-                className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#081424] bg-green-400 shadow-[0_0_8px_rgba(74,222,128,.75)]"
-              />
-            </span>
-            <span className="min-w-0 flex-1">
-              <strong className="block truncate text-sm">
-                {perfil.nombre}
-              </strong>
-              <span className="block truncate text-xs text-green-400/80">
-                Activo ahora · @{perfil.usuario}
+            <span>
+              <span className="block text-xl font-black tracking-tight text-white">
+                Reporta<span className="text-red-400">RD</span>
+              </span>
+
+              <span className="mt-0.5 block text-[9px] font-semibold tracking-[0.28em] text-blue-300/45">
+                RED CIUDADANA
               </span>
             </span>
-            <ChevronRight size={16} className="text-slate-600" />
           </button>
+
+          <motion.button
+            type="button"
+            onClick={() => navigate("/perfil")}
+            whileHover={reducirMovimiento ? undefined : { y: -2 }}
+            whileTap={reducirMovimiento ? undefined : { scale: 0.98 }}
+            className="group relative mt-5 w-full overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.075] to-white/[0.025] p-3.5 text-left shadow-lg shadow-black/10 transition hover:border-blue-400/25"
+          >
+            <span className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-blue-500/10 blur-2xl transition group-hover:bg-blue-500/20" />
+
+            <span className="relative flex items-center gap-3">
+              <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-visible rounded-full bg-gradient-to-br from-blue-500 to-red-500 p-[2px] font-bold shadow-lg shadow-blue-950/40">
+                <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#0a1729]">
+                  {perfil.foto ? (
+                    <img
+                      src={perfil.foto}
+                      alt={`Foto de ${perfil.nombre}`}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    iniciales
+                  )}
+                </span>
+
+                <span
+                  title="Activo ahora"
+                  className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-[3px] border-[#0a1729] bg-green-400 shadow-[0_0_10px_rgba(74,222,128,.85)]"
+                />
+              </span>
+
+              <span className="min-w-0 flex-1">
+                <strong className="block truncate text-sm text-white">
+                  {perfil.nombre}
+                </strong>
+
+                <span className="mt-0.5 block truncate text-[10px] font-medium text-green-300">
+                  ● Activo ahora
+                </span>
+
+                <span className="block truncate text-[10px] text-slate-500">
+                  @{perfil.usuario}
+                </span>
+              </span>
+
+              <ChevronRight
+                size={16}
+                className="text-blue-300/35 transition group-hover:translate-x-1 group-hover:text-blue-300"
+              />
+            </span>
+
+            <span className="relative mt-3 flex items-center justify-between text-[9px] text-slate-500">
+              <span>Nivel 4 · Colaborador</span>
+              <span className="font-semibold text-blue-300">780 XP</span>
+            </span>
+
+            <span className="relative mt-1.5 block h-1 overflow-hidden rounded-full bg-white/[0.06]">
+              <motion.span
+                initial={{ width: 0 }}
+                animate={{ width: "65%" }}
+                transition={{ duration: 0.9, delay: 0.45 }}
+                className="block h-full rounded-full bg-gradient-to-r from-blue-500 via-violet-400 to-red-400"
+              />
+            </span>
+          </motion.button>
         </header>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+        <nav className="reportard-scrollbar relative flex-1 space-y-1 overflow-y-auto p-3 pr-2.5">
+          <p className="mb-2 px-3 pt-1 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-600">
+            Tu espacio
+          </p>
+
           {enlaces.map(({ texto, ruta, icono: Icono }) => {
             const activo = estaActivo(ruta);
 
@@ -277,10 +377,10 @@ export default function DesktopChrome({ onLogout }) {
                 onMouseLeave={desactivarConexion}
                 whileHover={reducirMovimiento ? undefined : { x: 4 }}
                 whileTap={reducirMovimiento ? undefined : { scale: 0.97 }}
-                className={`group relative flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm transition duration-200 ${
+                className={`group relative flex w-full items-center gap-3 overflow-hidden rounded-2xl px-3 py-2.5 text-left text-sm transition duration-200 ${
                   activo
-                    ? "bg-red-500/10 font-semibold text-red-400"
-                    : "text-slate-400 hover:bg-white/5 hover:text-white"
+                    ? "border border-red-400/15 bg-gradient-to-r from-red-500/15 to-orange-500/[0.04] font-semibold text-red-300 shadow-lg shadow-red-950/10"
+                    : "border border-transparent text-slate-300/75 hover:border-white/[0.06] hover:bg-white/[0.055] hover:text-white"
                 }`}
               >
                 {activo && (
@@ -290,24 +390,64 @@ export default function DesktopChrome({ onLogout }) {
                     className="absolute left-0 h-7 w-1 rounded-r-full bg-red-500 shadow-lg shadow-red-500/50"
                   />
                 )}
-                <Icono
-                  size={20}
-                  fill={activo && ruta === "/" ? "currentColor" : "none"}
-                />
-                {texto}
+                <span
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition ${
+                    activo
+                      ? "bg-red-500/15 text-red-300"
+                      : "bg-white/[0.035] text-slate-400 group-hover:bg-blue-500/10 group-hover:text-blue-300"
+                  }`}
+                >
+                  <Icono
+                    size={17}
+                    fill={activo && ruta === "/" ? "currentColor" : "none"}
+                  />
+                </span>
+
+                <span className="flex-1">{texto}</span>
+
+                {ruta === "/notificaciones" && (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[9px] font-bold text-white shadow-lg shadow-red-500/25">
+                    3
+                  </span>
+                )}
               </motion.button>
             );
           })}
         </nav>
 
-        <div className="space-y-2 border-t border-white/10 p-3">
-          <button
+        <div className="relative space-y-2 border-t border-white/[0.07] p-3">
+          <div className="mb-3 flex items-center gap-3 rounded-2xl border border-blue-400/10 bg-blue-500/[0.055] px-3 py-2.5">
+            <span className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/15 text-blue-300">
+              <Activity size={16} />
+              <span className="absolute -right-0.5 -top-0.5 h-2 w-2 animate-pulse rounded-full bg-green-400" />
+            </span>
+
+            <span>
+              <strong className="block text-[10px] text-blue-200">
+                Comunidad conectada
+              </strong>
+              <span className="text-[9px] text-slate-500">
+                291 ciudadanos activos
+              </span>
+            </span>
+          </div>
+
+          <motion.button
             type="button"
             onClick={() => navigate("/publicar")}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 px-4 py-3 text-sm font-bold shadow-lg shadow-red-950/30 transition hover:-translate-y-0.5"
+            whileHover={reducirMovimiento ? undefined : { y: -2, scale: 1.01 }}
+            whileTap={reducirMovimiento ? undefined : { scale: 0.97 }}
+            className="relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-red-500 via-red-500 to-orange-500 px-4 py-3 text-sm font-bold shadow-[0_12px_28px_rgba(239,68,68,.22)]"
           >
-            <CirclePlus size={19} /> Crear contenido
-          </button>
+            <motion.span
+              animate={reducirMovimiento ? undefined : { x: ["-140%", "180%"] }}
+              transition={{ duration: 2.8, repeat: Infinity, repeatDelay: 2 }}
+              className="absolute inset-y-0 w-12 rotate-12 bg-white/15 blur-md"
+            />
+
+            <CirclePlus size={19} />
+            Crear contenido
+          </motion.button>
           <button
             type="button"
             onClick={cerrarSesion}
@@ -326,22 +466,45 @@ export default function DesktopChrome({ onLogout }) {
           opacity: { duration: 0.35, delay: 0.08 },
         }}
         data-reportard-right
-        className="fixed bottom-4 right-4 top-4 z-30 hidden w-72 space-y-4 overflow-y-auto text-white xl:right-[calc(50%_-_36rem)] xl:block"
+        className="reportard-scrollbar fixed bottom-4 right-4 top-4 z-30 hidden w-72 space-y-4 overflow-y-auto overflow-x-hidden pb-2 pr-1 text-white xl:right-[calc(50%_-_36rem)] xl:block"
       >
-        <section className="rounded-[1.75rem] border border-white/10 bg-[#081424]/95 p-5 shadow-xl shadow-black/20 backdrop-blur-xl">
-          <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15 text-amber-400">
-              <TrendingUp size={19} />
-            </span>
-            <div>
-              <h2 className="text-sm font-bold">Actividad ciudadana</h2>
-              <p className="text-[10px] text-slate-500">Tendencias en Santiago</p>
+        <section className="group relative overflow-hidden rounded-[1.9rem] border border-amber-300/15 bg-gradient-to-br from-[#0d1c30]/98 via-[#081525]/98 to-amber-950/20 p-5 shadow-[0_20px_55px_rgba(0,0,0,.3),0_0_35px_rgba(245,158,11,.05)] backdrop-blur-xl">
+          <div className="pointer-events-none absolute -right-12 -top-14 h-40 w-40 rounded-full bg-amber-500/10 blur-3xl transition duration-700 group-hover:bg-amber-500/15" />
+          <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-amber-300/50 to-transparent" />
+
+          <div className="relative flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <motion.span
+                animate={
+                  reducirMovimiento
+                    ? undefined
+                    : { rotate: [0, 5, 0, -5, 0] }
+                }
+                transition={{ duration: 4, repeat: Infinity }}
+                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-amber-300/15 bg-amber-500/15 text-amber-300 shadow-lg shadow-amber-950/20"
+              >
+                <TrendingUp size={19} />
+              </motion.span>
+
+              <div>
+                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-amber-300/70">
+                  Pulso ciudadano
+                </p>
+                <h2 className="mt-0.5 text-sm font-bold text-white">
+                  Lo que mueve Santiago
+                </h2>
+              </div>
             </div>
+
+            <span className="flex items-center gap-1 rounded-full border border-green-400/15 bg-green-500/10 px-2 py-1 text-[8px] font-bold uppercase tracking-wider text-green-300">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-400" />
+              En vivo
+            </span>
           </div>
 
-          <div className="mt-4 space-y-1">
+          <div className="relative mt-5 space-y-2">
             {tendencias.map((tendencia, indice) => (
-              <button
+              <motion.button
                 type="button"
                 key={tendencia.tema}
                 onClick={() => navigate("/buscar")}
@@ -354,39 +517,71 @@ export default function DesktopChrome({ onLogout }) {
                   )
                 }
                 onMouseLeave={desactivarConexion}
-                className="flex w-full gap-3 rounded-2xl px-2 py-3 text-left transition hover:bg-white/5"
+                whileHover={reducirMovimiento ? undefined : { x: 3 }}
+                whileTap={reducirMovimiento ? undefined : { scale: 0.98 }}
+                className="w-full rounded-2xl border border-white/[0.055] bg-white/[0.035] p-3 text-left transition hover:border-amber-300/15 hover:bg-white/[0.065]"
               >
-                <span className="text-xs font-bold text-slate-600">
-                  {String(indice + 1).padStart(2, "0")}
-                </span>
-                <span>
-                  <strong className="block text-xs text-slate-200">
-                    {tendencia.tema}
-                  </strong>
-                  <span className="mt-0.5 block text-[10px] text-slate-600">
-                    {tendencia.cantidad}
+                <span className="flex items-center gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-[10px] font-black text-slate-500">
+                    {String(indice + 1).padStart(2, "0")}
+                  </span>
+
+                  <span className="min-w-0 flex-1">
+                    <strong className="block truncate text-xs text-slate-100">
+                      {tendencia.tema}
+                    </strong>
+
+                    <span className="mt-0.5 block text-[9px] text-slate-500">
+                      {tendencia.cantidad}
+                    </span>
+                  </span>
+
+                  <span className="flex items-center gap-0.5 rounded-full bg-green-500/10 px-2 py-1 text-[8px] font-bold text-green-300">
+                    <ArrowUpRight size={10} />
+                    {tendencia.crecimiento}
                   </span>
                 </span>
-              </button>
+
+                <span className="mt-2.5 block h-1 overflow-hidden rounded-full bg-white/[0.05]">
+                  <motion.span
+                    initial={{ width: 0 }}
+                    animate={{ width: `${tendencia.nivel}%` }}
+                    transition={{ duration: 0.8, delay: 0.3 + indice * 0.12 }}
+                    className={`block h-full rounded-full bg-gradient-to-r ${tendencia.color}`}
+                  />
+                </span>
+              </motion.button>
             ))}
           </div>
         </section>
 
-        <section className="rounded-[1.75rem] border border-white/10 bg-[#081424]/95 p-5 shadow-xl shadow-black/20 backdrop-blur-xl">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold">Comunidades sugeridas</h2>
+        <section className="group relative overflow-hidden rounded-[1.9rem] border border-violet-300/15 bg-gradient-to-br from-[#0c192d]/98 via-[#081525]/98 to-violet-950/20 p-5 shadow-[0_20px_55px_rgba(0,0,0,.28),0_0_35px_rgba(139,92,246,.05)] backdrop-blur-xl">
+          <div className="pointer-events-none absolute -bottom-16 -left-12 h-40 w-40 rounded-full bg-violet-500/10 blur-3xl transition duration-700 group-hover:bg-violet-500/15" />
+          <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-violet-300/50 to-transparent" />
+
+          <div className="relative flex items-center justify-between">
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-violet-300/65">
+                Conecta y participa
+              </p>
+              <h2 className="mt-1 text-sm font-bold text-white">
+                Comunidades para ti
+              </h2>
+            </div>
+
             <button
               type="button"
               onClick={() => navigate("/comunidades")}
-              className="text-[10px] font-semibold text-red-400"
+              className="flex items-center gap-1 text-[9px] font-semibold text-violet-300 transition hover:text-white"
             >
-              Ver todas
+              Explorar
+              <ArrowUpRight size={12} />
             </button>
           </div>
 
-          <div className="mt-4 space-y-3">
+          <div className="relative mt-4 space-y-2">
             {comunidades.map((grupo) => (
-              <button
+              <motion.button
                 type="button"
                 key={grupo.nombre}
                 onClick={() => navigate("/comunidades")}
@@ -399,26 +594,41 @@ export default function DesktopChrome({ onLogout }) {
                   )
                 }
                 onMouseLeave={desactivarConexion}
-                className="flex w-full items-center gap-3 text-left"
+                whileHover={reducirMovimiento ? undefined : { x: 3, y: -1 }}
+                whileTap={reducirMovimiento ? undefined : { scale: 0.98 }}
+                className="group/comunidad flex w-full items-center gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.03] p-2.5 text-left transition hover:border-violet-300/15 hover:bg-white/[0.06]"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/30 to-violet-500/30 text-xs font-bold text-blue-200">
-                  {grupo.iniciales}
+                <span className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${grupo.color} p-[1px] shadow-lg shadow-black/20`}>
+                  <span className="flex h-full w-full items-center justify-center rounded-[0.9rem] bg-[#0a1728] text-xs font-bold text-white">
+                    {grupo.iniciales}
+                  </span>
+
+                  <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-[3px] border-[#0a1728] bg-green-400" />
                 </span>
+
                 <span className="min-w-0 flex-1">
-                  <strong className="block truncate text-xs">
+                  <strong className="block truncate text-xs text-slate-100">
                     {grupo.nombre}
                   </strong>
-                  <span className="text-[10px] text-slate-600">
+
+                  <span className="mt-0.5 block text-[9px] text-slate-500">
                     {grupo.miembros} miembros
                   </span>
+
+                  <span className="mt-0.5 block text-[8px] font-medium text-green-300/70">
+                    {grupo.actividad}
+                  </span>
                 </span>
-                <ChevronRight size={15} className="text-slate-700" />
-              </button>
+
+                <span className="rounded-full border border-violet-300/10 bg-violet-500/10 px-2 py-1 text-[8px] font-semibold text-violet-300 transition group-hover/comunidad:bg-violet-500/20">
+                  Ver
+                </span>
+              </motion.button>
             ))}
           </div>
         </section>
 
-        <button
+        <motion.button
           type="button"
           onClick={() => navigate("/reportar")}
           onMouseEnter={(evento) =>
@@ -430,22 +640,43 @@ export default function DesktopChrome({ onLogout }) {
             )
           }
           onMouseLeave={desactivarConexion}
-          className="group relative w-full overflow-hidden rounded-[1.75rem] border border-red-500/20 bg-gradient-to-br from-red-500/15 to-orange-500/[0.06] p-5 text-left shadow-xl shadow-black/20"
+          whileHover={reducirMovimiento ? undefined : { y: -3, scale: 1.01 }}
+          whileTap={reducirMovimiento ? undefined : { scale: 0.98 }}
+          className="group relative w-full overflow-hidden rounded-[1.9rem] border border-red-400/25 bg-gradient-to-br from-red-500/25 via-red-950/30 to-orange-500/10 p-5 text-left shadow-[0_20px_55px_rgba(0,0,0,.3),0_0_35px_rgba(239,68,68,.09)]"
         >
-          <span className="absolute -right-7 -top-7 h-24 w-24 rounded-full bg-red-500/10 transition duration-500 group-hover:scale-125" />
-          <span className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-red-500 text-white shadow-lg shadow-red-500/30">
-            <Megaphone size={20} />
+          <span className="absolute -right-10 -top-12 h-36 w-36 rounded-full bg-red-400/15 blur-2xl transition duration-700 group-hover:scale-125 group-hover:bg-red-400/20" />
+          <span className="absolute -bottom-16 -left-10 h-32 w-32 rounded-full bg-orange-500/10 blur-3xl" />
+          <span className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-red-300/70 to-transparent" />
+
+          <span className="relative flex items-start justify-between gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-red-200/20 bg-red-500 text-white shadow-lg shadow-red-500/35">
+              <Megaphone size={20} />
+            </span>
+
+            <span className="rounded-full border border-red-300/15 bg-red-500/15 px-2.5 py-1 text-[8px] font-bold uppercase tracking-wider text-red-200">
+              Acción ciudadana
+            </span>
           </span>
-          <strong className="relative mt-4 block text-sm">
+
+          <strong className="relative mt-4 block text-base text-white">
             ¿Ves un problema cerca?
           </strong>
-          <span className="relative mt-1 block text-xs leading-5 text-slate-500">
-            Repórtalo y permite que la comunidad lo confirme.
-          </span>
-        </button>
 
-        <div className="flex items-center justify-center gap-2 py-2 text-[10px] text-slate-700">
-          <ShieldCheck size={13} /> Comunidad segura · ReportaRD
+          <span className="relative mt-1.5 block text-xs leading-5 text-slate-400">
+            Hazlo visible. Tu comunidad puede confirmarlo y darle seguimiento.
+          </span>
+
+          <span className="relative mt-4 flex items-center justify-between border-t border-white/[0.07] pt-3 text-[10px] font-semibold text-red-200">
+            Crear un reporte
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 transition group-hover:translate-x-1 group-hover:bg-white/15">
+              <ArrowUpRight size={14} />
+            </span>
+          </span>
+        </motion.button>
+
+        <div className="flex items-center justify-center gap-2 py-2 text-[9px] text-slate-600">
+          <ShieldCheck size={13} className="text-green-400/50" />
+          Identidad verificada · Comunidad segura
         </div>
       </motion.aside>
     </>
@@ -667,10 +898,6 @@ function RedDeEnergia({ ruta, reducirMovimiento }) {
 
       {cables.map((cable, indice) => {
         const rutaBase = crearRutaCable(cable, 0);
-        const rutaAlta = crearRutaCable(
-          cable,
-          indice % 2 === 0 ? -5 : 5,
-        );
 
         return (
           <motion.g key={cable.id}>
@@ -681,16 +908,10 @@ function RedDeEnergia({ ruta, reducirMovimiento }) {
               strokeWidth="5"
               strokeLinecap="round"
               opacity="0.1"
-              filter="url(#reportard-cable-glow)"
               initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1, d: [rutaBase, rutaAlta, rutaBase] }}
+              animate={{ pathLength: 1 }}
               transition={{
                 pathLength: { duration: 0.9, delay: indice * 0.08 },
-                d: {
-                  duration: 5.5 + indice * 0.35,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                },
               }}
             />
 
@@ -705,44 +926,35 @@ function RedDeEnergia({ ruta, reducirMovimiento }) {
               initial={{ pathLength: 0, opacity: 0 }}
               animate={{
                 pathLength: 1,
-                opacity: [0.38, 0.9, 0.38],
                 strokeDashoffset: [0, -80],
-                d: [rutaBase, rutaAlta, rutaBase],
               }}
               transition={{
                 pathLength: { duration: 1, delay: 0.15 + indice * 0.08 },
-                opacity: { duration: 2.4, repeat: Infinity },
                 strokeDashoffset: {
-                  duration: 2.2 + indice * 0.18,
+                  duration: 3.2 + indice * 0.12,
                   repeat: Infinity,
                   ease: "linear",
                 },
-                d: {
-                  duration: 5.5 + indice * 0.35,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                },
               }}
+              opacity="0.72"
             />
 
-            <motion.circle
+            <circle
               cx={cable.desdeX}
               cy={cable.desdeY}
               r="4.5"
               fill={cable.color}
               filter="url(#reportard-cable-glow)"
-              animate={{ r: [3.5, 6, 3.5], opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 2, repeat: Infinity, delay: indice * 0.16 }}
+              opacity="0.85"
             />
 
-            <motion.circle
+            <circle
               cx={cable.hastaX}
               cy={cable.hastaY}
               r="4.5"
               fill={cable.color}
               filter="url(#reportard-cable-glow)"
-              animate={{ r: [6, 3.5, 6], opacity: [1, 0.5, 1] }}
-              transition={{ duration: 2, repeat: Infinity, delay: indice * 0.16 }}
+              opacity="0.85"
             />
 
             <circle
@@ -753,21 +965,8 @@ function RedDeEnergia({ ruta, reducirMovimiento }) {
             >
               <animateMotion
                 path={rutaBase}
-                dur={`${2.8 + indice * 0.32}s`}
+                dur={`${3.5 + indice * 0.24}s`}
                 begin={`${indice * -0.42}s`}
-                repeatCount="indefinite"
-              />
-            </circle>
-
-            <circle
-              r="1.8"
-              fill="white"
-              opacity="0.8"
-            >
-              <animateMotion
-                path={rutaBase}
-                dur={`${4.1 + indice * 0.28}s`}
-                begin={`${indice * -0.67}s`}
                 repeatCount="indefinite"
               />
             </circle>

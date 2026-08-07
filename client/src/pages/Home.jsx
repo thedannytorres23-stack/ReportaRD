@@ -6,14 +6,12 @@ import {
   Eye,
   House,
   Image,
-  Lightbulb,
   LogOut,
   Map,
   MapPin,
   Megaphone,
   MessageCircle,
   Menu,
-  MoreHorizontal,
   PenLine,
   Plus,
   Radio,
@@ -21,7 +19,6 @@ import {
   Sparkles,
   Trash2,
   UserRound,
-  Wrench,
   X,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
@@ -29,29 +26,7 @@ import PostCard from "../components/PostCard";
 import ReportCard from "../components/ReportCard";
 import SideMenu from "../components/SideMenu";
 import CommunityRadar from "../components/CommunityRadar";
-
-const categorias = [
-  {
-    nombre: "Infraestructura",
-    icono: Wrench,
-    color: "bg-red-500/15 text-red-400",
-  },
-  {
-    nombre: "Alumbrado",
-    icono: Lightbulb,
-    color: "bg-amber-500/15 text-amber-400",
-  },
-  {
-    nombre: "Basura",
-    icono: Trash2,
-    color: "bg-green-500/15 text-green-400",
-  },
-  {
-    nombre: "Más",
-    icono: MoreHorizontal,
-    color: "bg-slate-700 text-slate-300",
-  },
-];
+import CommunityPoll from "../components/CommunityPoll";
 
 const contenidoFeed = [
   {
@@ -729,57 +704,9 @@ export default function Home({ onLogout }) {
             </div>
           </section>
 
-          <section className="px-5 pb-7 pt-6">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <h2 className="font-semibold">
-                  Explorar por categoría
-                </h2>
-
-                <p className="mt-1 text-xs text-slate-500">
-                  Filtra los reportes del mapa ciudadano
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => navigate("/mapa")}
-                className="text-xs font-medium text-red-400 transition hover:text-red-300"
-              >
-                Ver mapa
-              </button>
-            </div>
-
-            <div className="grid grid-cols-4 gap-3">
-              {categorias.map(({ nombre, icono: Icono, color }) => (
-                <button
-                  type="button"
-                  key={nombre}
-                  onClick={() => {
-                    if (nombre === "Más") {
-                      navigate("/mapa");
-                      return;
-                    }
-
-                    navigate(
-                      `/mapa?categoria=${encodeURIComponent(nombre)}`,
-                    );
-                  }}
-                  className="group flex min-w-0 flex-col items-center gap-2"
-                >
-                  <span
-                    className={`flex h-14 w-14 items-center justify-center rounded-full transition duration-200 group-hover:scale-105 group-active:scale-95 ${color}`}
-                  >
-                    <Icono size={22} />
-                  </span>
-
-                  <span className="w-full truncate text-center text-[10px] text-slate-400 transition group-hover:text-white">
-                    {nombre}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </section>
+          <CommunityPoll
+            onOpenDiscussion={() => navigate("/comunidades")}
+          />
 
           <section className="border-t border-white/5 px-5 py-6">
             <div className="mb-5">
@@ -1285,4 +1212,4 @@ export default function Home({ onLogout }) {
       `}</style>
     </div>
   );
-}
+} 
