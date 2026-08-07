@@ -28,6 +28,7 @@ import { useLocation, useNavigate } from "react-router";
 import PostCard from "../components/PostCard";
 import ReportCard from "../components/ReportCard";
 import SideMenu from "../components/SideMenu";
+import CommunityRadar from "../components/CommunityRadar";
 
 const categorias = [
   {
@@ -533,31 +534,20 @@ export default function Home({ onLogout }) {
                   </span>
                 </div>
 
-                <div className="mt-3 flex items-end gap-4">
-                  <div className="min-w-0 flex-1">
-                    <h2 className="max-w-xs text-2xl font-bold leading-tight">
-                      ¿Qué está pasando en tu comunidad?
-                    </h2>
+                <div className="mt-1 flex w-full justify-center">
+                  <CommunityRadar
+                    onOpenMap={() => navigate("/mapa")}
+                  />
+                </div>
 
-                    <p className="mt-2 max-w-sm text-xs leading-5 text-slate-500">
-                      Descubre, participa y ayuda a generar cambios cerca de ti.
-                    </p>
-                  </div>
+                <div className="mt-3 text-center">
+                  <h2 className="mx-auto max-w-sm text-2xl font-bold leading-tight">
+                    ¿Qué está pasando en tu comunidad?
+                  </h2>
 
-                  <button
-                    type="button"
-                    onClick={() => navigate("/mapa")}
-                    aria-label="Explorar actividad cercana"
-                    className="group relative mb-1 flex h-14 w-14 shrink-0 items-center justify-center"
-                  >
-                    <span className="absolute h-12 w-12 animate-ping rounded-full bg-red-500/15 [animation-duration:2.4s]" />
-
-                    <span className="absolute h-14 w-14 rounded-full border border-red-400/15 bg-red-500/5 transition duration-300 group-hover:scale-110 group-hover:bg-red-500/10" />
-
-                    <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg shadow-red-500/25 transition duration-300 group-hover:-translate-y-0.5">
-                      <MapPin size={19} fill="currentColor" />
-                    </span>
-                  </button>
+                  <p className="mx-auto mt-2 max-w-sm text-xs leading-5 text-slate-500">
+                    Descubre, participa y ayuda a generar cambios cerca de ti.
+                  </p>
                 </div>
               </div>
             </div>
@@ -599,11 +589,10 @@ export default function Home({ onLogout }) {
                   className="group"
                 >
                   <span
-                    className={`relative flex h-16 w-16 items-center justify-center rounded-full transition duration-300 group-hover:scale-105 group-active:scale-95 ${
-                      historiasPropias.length > 0
+                    className={`relative flex h-16 w-16 items-center justify-center rounded-full transition duration-300 group-hover:scale-105 group-active:scale-95 ${historiasPropias.length > 0
                         ? `bg-gradient-to-br p-[2px] ${historiasPropias[0].color}`
                         : "border border-dashed border-blue-400/50 bg-blue-500/10"
-                    }`}
+                      }`}
                   >
                     <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-[#06101f] bg-[#0b1626] text-sm font-bold text-white">
                       {perfil.foto ? (
@@ -740,18 +729,24 @@ export default function Home({ onLogout }) {
             </div>
           </section>
 
-          <section className="px-5 py-6">
+          <section className="px-5 pb-7 pt-6">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-semibold">
-                Explorar categorías
-              </h2>
+              <div>
+                <h2 className="font-semibold">
+                  Explorar por categoría
+                </h2>
+
+                <p className="mt-1 text-xs text-slate-500">
+                  Filtra los reportes del mapa ciudadano
+                </p>
+              </div>
 
               <button
                 type="button"
                 onClick={() => navigate("/mapa")}
                 className="text-xs font-medium text-red-400 transition hover:text-red-300"
               >
-                Ver todas
+                Ver mapa
               </button>
             </div>
 
@@ -784,47 +779,6 @@ export default function Home({ onLogout }) {
                 </button>
               ))}
             </div>
-          </section>
-
-          <section className="px-5 pb-7">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <h2 className="font-semibold">
-                  Actividad cerca de ti
-                </h2>
-
-                <p className="mt-1 text-xs text-slate-500">
-                  Reportes recientes en Santiago
-                </p>
-              </div>
-
-              <span className="rounded-full bg-red-500/10 px-2.5 py-1 text-[10px] font-medium text-red-400">
-                Toca el mapa para explorar
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => navigate("/mapa")}
-              aria-label="Abrir mapa de actividad cercana"
-              className="group relative block h-40 w-full overflow-hidden rounded-2xl border border-blue-400/10 bg-[#0b2138] text-left transition duration-300 hover:border-blue-400/30 active:scale-[0.99]"
-            >
-              <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(#3b82f6_1px,transparent_1px),linear-gradient(90deg,#3b82f6_1px,transparent_1px)] [background-size:32px_32px]" />
-
-              <div className="absolute inset-0 bg-gradient-to-t from-[#06101f]/55 to-transparent opacity-0 transition duration-300 group-hover:opacity-100" />
-
-              <span className="absolute left-[20%] top-[55%] h-4 w-4 rounded-full border-4 border-red-300 bg-red-500 shadow-lg shadow-red-500/50" />
-
-              <span className="absolute left-[52%] top-[25%] h-4 w-4 rounded-full border-4 border-violet-300 bg-violet-500 shadow-lg shadow-violet-500/50" />
-
-              <span className="absolute right-[18%] top-[48%] h-4 w-4 rounded-full border-4 border-amber-300 bg-amber-500 shadow-lg shadow-amber-500/50" />
-
-              <span className="absolute bottom-[18%] right-[38%] h-4 w-4 rounded-full border-4 border-green-300 bg-green-500 shadow-lg shadow-green-500/50" />
-
-              <span className="absolute bottom-3 left-1/2 -translate-x-1/2 translate-y-3 rounded-full border border-white/10 bg-[#06101f]/90 px-3 py-1.5 text-[10px] font-semibold text-white opacity-0 shadow-xl backdrop-blur transition duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-                Explorar actividad cercana
-              </span>
-            </button>
           </section>
 
           <section className="border-t border-white/5 px-5 py-6">
@@ -866,9 +820,8 @@ export default function Home({ onLogout }) {
         )}
 
         <div
-          className={`pointer-events-none fixed bottom-[5.8rem] left-1/2 z-40 h-28 w-full max-w-sm -translate-x-1/2 transition ${
-            menuAccionesAbierto ? "visible" : "invisible"
-          }`}
+          className={`pointer-events-none fixed bottom-[5.8rem] left-1/2 z-40 h-28 w-full max-w-sm -translate-x-1/2 transition ${menuAccionesAbierto ? "visible" : "invisible"
+            }`}
         >
           <button
             type="button"
@@ -876,11 +829,10 @@ export default function Home({ onLogout }) {
               setMenuAccionesAbierto(false);
               navigate("/publicar");
             }}
-            className={`pointer-events-auto absolute bottom-0 left-7 flex flex-col items-center gap-2 transition-all duration-300 ease-out ${
-              menuAccionesAbierto
+            className={`pointer-events-auto absolute bottom-0 left-7 flex flex-col items-center gap-2 transition-all duration-300 ease-out ${menuAccionesAbierto
                 ? "translate-x-0 translate-y-0 scale-100 opacity-100"
                 : "translate-x-20 translate-y-16 scale-50 opacity-0"
-            }`}
+              }`}
           >
             <span className="flex h-13 w-13 items-center justify-center rounded-2xl border border-blue-300/20 bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-xl shadow-blue-500/30 transition hover:-translate-y-1 active:scale-90">
               <PenLine size={21} />
@@ -896,11 +848,10 @@ export default function Home({ onLogout }) {
               setMenuAccionesAbierto(false);
               setMostrarCrearHistoria(true);
             }}
-            className={`pointer-events-auto absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 transition-all delay-75 duration-300 ease-out ${
-              menuAccionesAbierto
+            className={`pointer-events-auto absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 transition-all delay-75 duration-300 ease-out ${menuAccionesAbierto
                 ? "translate-y-0 scale-100 opacity-100"
                 : "translate-y-20 scale-50 opacity-0"
-            }`}
+              }`}
           >
             <span className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-300/20 bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-xl shadow-violet-500/30 transition hover:-translate-y-1 active:scale-90">
               <Image size={22} />
@@ -919,11 +870,10 @@ export default function Home({ onLogout }) {
               setMenuAccionesAbierto(false);
               navigate("/reportar");
             }}
-            className={`pointer-events-auto absolute bottom-0 right-7 flex flex-col items-center gap-2 transition-all delay-150 duration-300 ease-out ${
-              menuAccionesAbierto
+            className={`pointer-events-auto absolute bottom-0 right-7 flex flex-col items-center gap-2 transition-all delay-150 duration-300 ease-out ${menuAccionesAbierto
                 ? "translate-x-0 translate-y-0 scale-100 opacity-100"
                 : "-translate-x-20 translate-y-16 scale-50 opacity-0"
-            }`}
+              }`}
           >
             <span className="flex h-13 w-13 items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500 to-orange-500 text-white shadow-xl shadow-red-500/30 transition hover:-translate-y-1 active:scale-90">
               <Megaphone size={22} />
@@ -967,11 +917,10 @@ export default function Home({ onLogout }) {
                 : "Abrir acciones de creación"
             }
             aria-expanded={menuAccionesAbierto}
-            className={`group relative -mt-8 flex h-16 w-16 items-center justify-center rounded-full border-4 border-[#06101f] bg-gradient-to-br from-red-500 via-red-500 to-orange-500 text-white shadow-xl transition-all duration-300 active:scale-90 ${
-              menuAccionesAbierto
+            className={`group relative -mt-8 flex h-16 w-16 items-center justify-center rounded-full border-4 border-[#06101f] bg-gradient-to-br from-red-500 via-red-500 to-orange-500 text-white shadow-xl transition-all duration-300 active:scale-90 ${menuAccionesAbierto
                 ? "scale-110 shadow-red-500/50"
                 : "shadow-red-500/30 hover:-translate-y-1"
-            }`}
+              }`}
           >
             {!menuAccionesAbierto && (
               <span className="absolute inset-1 animate-ping rounded-full bg-red-400/20 [animation-duration:2.6s]" />
@@ -982,9 +931,8 @@ export default function Home({ onLogout }) {
             <Plus
               size={29}
               strokeWidth={2.6}
-              className={`relative transition-transform duration-300 ${
-                menuAccionesAbierto ? "rotate-45" : "rotate-0"
-              }`}
+              className={`relative transition-transform duration-300 ${menuAccionesAbierto ? "rotate-45" : "rotate-0"
+                }`}
             />
           </button>
 
@@ -1191,11 +1139,10 @@ export default function Home({ onLogout }) {
                       key={color}
                       onClick={() => setColorHistoria(color)}
                       aria-label="Seleccionar estilo"
-                      className={`h-10 flex-1 rounded-xl bg-gradient-to-br transition active:scale-95 ${color} ${
-                        colorHistoria === color
+                      className={`h-10 flex-1 rounded-xl bg-gradient-to-br transition active:scale-95 ${color} ${colorHistoria === color
                           ? "ring-2 ring-white ring-offset-2 ring-offset-[#0b1626]"
                           : "opacity-60 hover:opacity-100"
-                      }`}
+                        }`}
                     />
                   ))}
                 </div>

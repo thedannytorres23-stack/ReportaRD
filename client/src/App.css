@@ -182,3 +182,125 @@
     border-right-color: var(--border);
   }
 }
+
+
+
+
+
+
+
+/* =========================================
+   Ambiente visual de ReportaRD
+========================================= */
+
+@keyframes reportard-ambient {
+  0% {
+    background-position:
+      10% 20%,
+      90% 70%;
+  }
+
+  50% {
+    background-position:
+      25% 40%,
+      75% 45%;
+  }
+
+  100% {
+    background-position:
+      10% 20%,
+      90% 70%;
+  }
+}
+
+@keyframes reportard-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(239, 68, 68, 0),
+      0 8px 25px rgba(0, 0, 0, 0.18);
+  }
+
+  50% {
+    box-shadow:
+      0 0 28px rgba(239, 68, 68, 0.14),
+      0 12px 35px rgba(0, 0, 0, 0.28);
+  }
+}
+
+[data-reportard-main] {
+  background-color: #020617;
+  background-image:
+    radial-gradient(
+      circle at 10% 20%,
+      rgba(37, 99, 235, 0.09),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 90% 70%,
+      rgba(239, 68, 68, 0.08),
+      transparent 32%
+    );
+
+  background-size: 140% 140%;
+  animation: reportard-ambient 16s ease-in-out infinite;
+}
+
+/* Publicaciones y reportes */
+
+[data-reportard-main] article {
+  transition:
+    transform 260ms ease,
+    border-color 260ms ease,
+    box-shadow 260ms ease;
+}
+
+/* Botones importantes */
+
+[data-reportard-main] button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+[data-reportard-main] button:active {
+  transform: scale(0.97);
+}
+
+/* Brillo suave del botón central */
+
+[data-reportard-main] .bg-red-500 {
+  animation: reportard-pulse 4s ease-in-out infinite;
+}
+
+/* Efectos exclusivos para computadora */
+
+@media (min-width: 1024px) and (hover: hover) {
+  [data-reportard-main] article:hover {
+    transform: translateY(-4px);
+    border-color: rgba(96, 165, 250, 0.22);
+    box-shadow:
+      0 18px 45px rgba(0, 0, 0, 0.3),
+      0 0 30px rgba(59, 130, 246, 0.05);
+  }
+
+  [data-reportard-main] button:hover {
+    filter: brightness(1.08);
+  }
+}
+
+/* Respeta usuarios sensibles al movimiento */
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reportard-main],
+  [data-reportard-main] .bg-red-500 {
+    animation: none;
+  }
+
+  [data-reportard-main] article,
+  [data-reportard-main] button {
+    transition: none;
+  }
+}
+
+
+
+
