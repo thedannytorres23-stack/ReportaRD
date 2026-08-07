@@ -25,20 +25,26 @@ import {
 } from "motion/react";
 import { useLocation, useNavigate } from "react-router";
 
-const perfilInicial = {
-  nombre: "Danny Torres",
-  usuario: "dannytorres",
+const usuarioVacio = {
+  nombre: "Usuario",
+  usuario: "usuario",
   foto: "",
 };
 
 const obtenerPerfil = () => {
   try {
+    const usuarioGuardado = localStorage.getItem("reportard_user");
+
+    if (!usuarioGuardado) return usuarioVacio;
+
+    const usuario = JSON.parse(usuarioGuardado);
+
     return {
-      ...perfilInicial,
-      ...JSON.parse(localStorage.getItem("reportard_profile") || "{}"),
+      ...usuarioVacio,
+      ...usuario,
     };
   } catch {
-    return perfilInicial;
+    return usuarioVacio;
   }
 };
 
