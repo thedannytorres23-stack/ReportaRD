@@ -1,7 +1,15 @@
-const API_URL = "http://localhost:5000/api";
+const API_URL = (
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api"
+).replace(/\/$/, "");
 
 const procesarRespuesta = async (respuesta) => {
-  const datos = await respuesta.json();
+  let datos;
+
+  try {
+    datos = await respuesta.json();
+  } catch {
+    throw new Error("El servidor devolvió una respuesta inválida.");
+  }
 
   if (!respuesta.ok) {
     throw new Error(
@@ -12,52 +20,55 @@ const procesarRespuesta = async (respuesta) => {
   return datos;
 };
 
-export const iniciarSesion = async ({
-  identificador,
-  contrasena,
-}) => {
-  const respuesta = await fetch(`${API_URL}/auth/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      identificador,
-      contrasena,
-    }),
-  });
+const realizarPeticion = async (ruta, opciones = {}) => {
+  try {
+    const respuesta = await fetch(`${API_URL}${ruta}`, opciones);
+    return procesarRespuesta(respuesta);
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error(
+        "No se pudo conectar con el backend. Comprueba que esté encendido.",
+      );
+    }
 
-  return procesarRespuesta(respuesta);
+    throw error;
+  }
 };
 
-export const registrarUsuario = async ({
+export const iniciarSesion = ({ identificador, contrasena }) => {
+  return realizarPeticion("/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ identificador, contrasena }),
+  });
+};
+
+export const registrarUsuario = ({
   nombre,
   usuario,
   correo,
   contrasena,
 }) => {
-  const respuesta = await fetch(`${API_URL}/auth/registro`, {
+  return realizarPeticion("/auth/registro", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      nombre,
-      usuario,
-      correo,
-      contrasena,
-    }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nombre, usuario, correo, contrasena }),
   });
-
-  return procesarRespuesta(respuesta);
 };
 
-export const obtenerMiPerfil = async (token) => {
-  const respuesta = await fetch(`${API_URL}/auth/perfil`, {
+export const obtenerMiPerfil = (token) => {
+  return realizarPeticion("/auth/perfil", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+};
+
+export const actualizarMiPerfil = (datosPerfil, token) => {
+  return realizarPeticion("/auth/perfil", {
+    method: "PUT",
     headers: {
+      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
+    body: JSON.stringify(datosPerfil),
   });
-
-  return procesarRespuesta(respuesta);
 };
