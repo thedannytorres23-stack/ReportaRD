@@ -253,7 +253,7 @@ export default function DesktopChrome({ onLogout }) {
           opacity: { duration: 0.35 },
         }}
         data-reportard-left
-        className="fixed bottom-4 left-4 top-4 z-40 hidden w-64 flex-col overflow-hidden rounded-[1.9rem] border border-blue-400/15 bg-gradient-to-b from-[#0b1b31]/98 via-[#081525]/98 to-[#07111f]/98 text-white shadow-[0_24px_80px_rgba(0,0,0,.38),0_0_45px_rgba(37,99,235,.07)] backdrop-blur-xl lg:flex xl:left-[calc(50%_-_36rem)]"
+        className="fixed bottom-4 left-4 top-4 z-40 hidden w-64 flex-col overflow-hidden rounded-[1.25rem] border border-blue-400/15 bg-gradient-to-b from-[#0b1b31]/98 via-[#081525]/98 to-[#07111f]/98 text-white shadow-[0_24px_80px_rgba(0,0,0,.38),0_0_45px_rgba(37,99,235,.07)] backdrop-blur-xl lg:flex xl:left-[calc(50%_-_36rem)]"
       >
         <div className="pointer-events-none absolute -left-16 -top-20 h-56 w-56 rounded-full bg-blue-500/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -right-16 h-52 w-52 rounded-full bg-red-500/[0.07] blur-3xl" />
@@ -299,7 +299,7 @@ export default function DesktopChrome({ onLogout }) {
             onClick={() => navigate("/perfil")}
             whileHover={reducirMovimiento ? undefined : { y: -2 }}
             whileTap={reducirMovimiento ? undefined : { scale: 0.98 }}
-            className="group relative mt-5 w-full overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.075] to-white/[0.025] p-3.5 text-left shadow-lg shadow-black/10 transition hover:border-blue-400/25"
+            className="group relative mt-5 w-full overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.075] to-white/[0.025] p-3.5 text-left shadow-lg shadow-black/10 transition hover:border-blue-400/25"
           >
             <span className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-blue-500/10 blur-2xl transition group-hover:bg-blue-500/20" />
 
@@ -474,7 +474,7 @@ export default function DesktopChrome({ onLogout }) {
         data-reportard-right
         className="reportard-scrollbar fixed bottom-4 right-4 top-4 z-30 hidden w-72 space-y-4 overflow-y-auto overflow-x-hidden pb-2 pr-1 text-white xl:right-[calc(50%_-_36rem)] xl:block"
       >
-        <section className="group relative overflow-hidden rounded-[1.9rem] border border-amber-300/15 bg-gradient-to-br from-[#0d1c30]/98 via-[#081525]/98 to-amber-950/20 p-5 shadow-[0_20px_55px_rgba(0,0,0,.3),0_0_35px_rgba(245,158,11,.05)] backdrop-blur-xl">
+        <section className="group relative overflow-hidden  border border-amber-300/15 bg-gradient-to-br from-[#0d1c30]/98 via-[#081525]/98 to-amber-950/20 p-5 shadow-[0_20px_55px_rgba(0,0,0,.3),0_0_35px_rgba(245,158,11,.05)] backdrop-blur-xl">
           <div className="pointer-events-none absolute -right-12 -top-14 h-40 w-40 rounded-full bg-amber-500/10 blur-3xl transition duration-700 group-hover:bg-amber-500/15" />
           <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-amber-300/50 to-transparent" />
 
@@ -561,7 +561,7 @@ export default function DesktopChrome({ onLogout }) {
           </div>
         </section>
 
-        <section className="group relative overflow-hidden rounded-[1.9rem] border border-violet-300/15 bg-gradient-to-br from-[#0c192d]/98 via-[#081525]/98 to-violet-950/20 p-5 shadow-[0_20px_55px_rgba(0,0,0,.28),0_0_35px_rgba(139,92,246,.05)] backdrop-blur-xl">
+        <section className="group relative overflow-hidden  border border-violet-300/15 bg-gradient-to-br from-[#0c192d]/98 via-[#081525]/98 to-violet-950/20 p-5 shadow-[0_20px_55px_rgba(0,0,0,.28),0_0_35px_rgba(139,92,246,.05)] backdrop-blur-xl">
           <div className="pointer-events-none absolute -bottom-16 -left-12 h-40 w-40 rounded-full bg-violet-500/10 blur-3xl transition duration-700 group-hover:bg-violet-500/15" />
           <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-violet-300/50 to-transparent" />
 
@@ -648,7 +648,7 @@ export default function DesktopChrome({ onLogout }) {
           onMouseLeave={desactivarConexion}
           whileHover={reducirMovimiento ? undefined : { y: -3, scale: 1.01 }}
           whileTap={reducirMovimiento ? undefined : { scale: 0.98 }}
-          className="group relative w-full overflow-hidden rounded-[1.9rem] border border-red-400/25 bg-gradient-to-br from-red-500/25 via-red-950/30 to-orange-500/10 p-5 text-left shadow-[0_20px_55px_rgba(0,0,0,.3),0_0_35px_rgba(239,68,68,.09)]"
+          className="group relative w-full overflow-hidden  border border-red-400/25 bg-gradient-to-br from-red-500/25 via-red-950/30 to-orange-500/10 p-5 text-left shadow-[0_20px_55px_rgba(0,0,0,.3),0_0_35px_rgba(239,68,68,.09)]"
         >
           <span className="absolute -right-10 -top-12 h-36 w-36 rounded-full bg-red-400/15 blur-2xl transition duration-700 group-hover:scale-125 group-hover:bg-red-400/20" />
           <span className="absolute -bottom-16 -left-10 h-32 w-32 rounded-full bg-orange-500/10 blur-3xl" />
