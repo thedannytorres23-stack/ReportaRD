@@ -28,6 +28,7 @@ const realizarPeticion = async (ruta, opciones = {}) => {
     if (error instanceof TypeError) {
       throw new Error(
         "No se pudo conectar con el backend. Comprueba que esté encendido.",
+        { cause: error },
       );
     }
 

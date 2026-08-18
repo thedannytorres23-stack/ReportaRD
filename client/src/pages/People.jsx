@@ -44,7 +44,7 @@ const formatearActividad = (persona) => {
 export default function People() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const token = useMemo(obtenerToken, []);
+ const token = useMemo(() => obtenerToken(), []);
 
   const vistaRecibida = searchParams.get("vista");
   const vistaActiva = ["descubrir", "conectados", "recientes"].includes(

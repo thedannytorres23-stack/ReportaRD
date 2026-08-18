@@ -94,9 +94,12 @@ export default function Messages() {
   const finalChatRef = useRef(null);
   const temporizadorEscrituraRef = useRef(null);
   const conversacionActivaRef = useRef(null);
-  const sesionRef = useRef(obtenerSesion());
 
-  const { token, usuario } = sesionRef.current;
+ 
+  const [sesion] = useState(() => obtenerSesion());
+const { token, usuario } = sesion;
+
+  
   const miUsuarioId = usuario?._id || usuario?.id || "";
 
   const [busqueda, setBusqueda] = useState("");

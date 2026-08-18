@@ -45,7 +45,7 @@ const formatearFecha = (fecha) => {
 export default function UserProfile() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const sesion = useMemo(obtenerSesion, []);
+const sesion = useMemo(() => obtenerSesion(), []);
 
   const [persona, setPersona] = useState(null);
   const [cargando, setCargando] = useState(true);

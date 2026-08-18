@@ -60,7 +60,7 @@ const textoActividad = (persona) => {
 
 export default function SearchPage() {
   const navigate = useNavigate();
-  const token = useMemo(obtenerToken, []);
+ const token = useMemo(() => obtenerToken(), []);
 
   const [busqueda, setBusqueda] = useState("");
   const [filtroActivo, setFiltroActivo] = useState("todos");

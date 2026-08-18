@@ -35,6 +35,7 @@ const solicitar = async (ruta, token, opciones = {}) => {
     if (error instanceof TypeError) {
       throw new Error(
         "No se pudo conectar con ReportaRD Backend.",
+        { cause: error },
       );
     }
 
