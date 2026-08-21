@@ -29,6 +29,7 @@ import PostCard from "../components/PostCard";
 import ReportCard from "../components/ReportCard";
 import SideMenu from "../components/SideMenu";
 import CommunityRadar from "../components/CommunityRadar";
+import { listarPublicaciones } from "../services/contentService";
 
 const categorias = [
   {
@@ -217,14 +218,16 @@ const contenidoFeed = [
 ];
 
 const perfilInicial = {
-  nombre: "Danny Torres",
-  usuario: "dannytorres",
+  nombre: "Ciudadano ReportaRD",
+  usuario: "ciudadano",
   foto: "",
 };
 
 const obtenerPerfilGuardado = () => {
   try {
-    const datos = localStorage.getItem("reportard_profile");
+    const usuarioAutenticado = localStorage.getItem("reportard_user");
+    const perfilEditado = localStorage.getItem("reportard_profile");
+    const datos = usuarioAutenticado || perfilEditado;
 
     return datos
       ? {
@@ -235,6 +238,50 @@ const obtenerPerfilGuardado = () => {
   } catch {
     return perfilInicial;
   }
+};
+
+const obtenerToken = () => {
+  return localStorage.getItem("reportard_token") || "";
+};
+
+const formatearTiempo = (fecha) => {
+  const instante = new Date(fecha).getTime();
+
+  if (!Number.isFinite(instante)) return "Ahora";
+
+  const segundos = Math.max(0, Math.floor((Date.now() - instante) / 1000));
+
+  if (segundos < 60) return "Ahora";
+  if (segundos < 3600) return `Hace ${Math.floor(segundos / 60)} min`;
+  if (segundos < 86400) return `Hace ${Math.floor(segundos / 3600)} h`;
+
+  return `Hace ${Math.floor(segundos / 86400)} d`;
+};
+
+const convertirPublicacion = (publicacion) => {
+  const autor = publicacion.autor || {};
+  const nombreAutor = autor.nombre || "Ciudadano ReportaRD";
+
+  return {
+    id: publicacion._id,
+    tipo: "publicacion",
+    datos: {
+      id: publicacion._id,
+      autorId: autor._id,
+      autor: nombreAutor,
+      iniciales: obtenerIniciales(nombreAutor) || "RD",
+      foto: autor.foto || "",
+      verificado: false,
+      comunidad: publicacion.comunidad || "Comunidad ReportaRD",
+      tiempo: formatearTiempo(publicacion.createdAt),
+      contenido: publicacion.contenido,
+      mediaUrl: publicacion.mediaUrl || null,
+      mediaTipo: publicacion.mediaTipo || null,
+      reacciones: 0,
+      comentarios: 0,
+      compartidos: 0,
+    },
+  };
 };
 
 const obtenerIniciales = (nombre) => {
@@ -315,6 +362,9 @@ export default function Home({ onLogout }) {
   const location = useLocation();
 
   const [perfil] = useState(obtenerPerfilGuardado);
+  const [publicacionesReales, setPublicacionesReales] = useState([]);
+  const [cargandoFeed, setCargandoFeed] = useState(true);
+  const [errorFeed, setErrorFeed] = useState("");
 
   const primerNombre =
     perfil.nombre.trim().split(/\s+/)[0] || "Usuario";
@@ -343,6 +393,46 @@ export default function Home({ onLogout }) {
   );
 
   const historias = [...historiasPropias, ...historiasIniciales];
+  const elementosFeed = [...publicacionesReales, ...contenidoFeed];
+
+  useEffect(() => {
+    let vigente = true;
+
+    const cargarFeed = async () => {
+      const token = obtenerToken();
+
+      if (!token) {
+        if (vigente) {
+          setErrorFeed("Inicia sesión nuevamente para cargar el feed real.");
+          setCargandoFeed(false);
+        }
+        return;
+      }
+
+      try {
+        const datos = await listarPublicaciones(token);
+
+        if (vigente) {
+          setPublicacionesReales(
+            (datos.publicaciones || []).map(convertirPublicacion),
+          );
+          setErrorFeed("");
+        }
+      } catch (errorSolicitud) {
+        if (vigente) {
+          setErrorFeed(errorSolicitud.message);
+        }
+      } finally {
+        if (vigente) setCargandoFeed(false);
+      }
+    };
+
+    cargarFeed();
+
+    return () => {
+      vigente = false;
+    };
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(
@@ -793,7 +883,26 @@ export default function Home({ onLogout }) {
             </div>
 
             <div className="space-y-5">
-              {contenidoFeed.map((elemento) =>
+              {cargandoFeed && (
+                <div className="rounded-2xl border border-blue-400/10 bg-blue-500/5 px-4 py-3 text-sm text-blue-200">
+                  Cargando publicaciones de la comunidad…
+                </div>
+              )}
+
+              {errorFeed && (
+                <div className="rounded-2xl border border-amber-400/15 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+                  {errorFeed} El contenido de demostración sigue disponible.
+                </div>
+              )}
+
+              {publicacionesReales.length > 0 && (
+                <div className="flex items-center gap-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-400">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  Publicaciones reales
+                </div>
+              )}
+
+              {elementosFeed.map((elemento) =>
                 elemento.tipo === "reporte" ? (
                   <ReportCard
                     key={elemento.id}
