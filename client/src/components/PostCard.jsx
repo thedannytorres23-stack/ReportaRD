@@ -10,9 +10,17 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import ContentOptions from "./ContentOptions";
+import { eliminarPublicacion } from "../services/contentService";
 
 export default function PostCard({ publicacion, modoDetalle = false }) {
   const navigate = useNavigate();
+  const usuarioActual = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("reportard_user") || "{}");
+    } catch {
+      return {};
+    }
+  })();
 
   const idModeracion = `post-${
     publicacion.id ?? `${publicacion.autor}-${publicacion.tiempo}`
@@ -44,21 +52,36 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
     }
   });
 
+  const [eliminada, setEliminada] = useState(false);
+
   const esPropia = (() => {
     try {
-      const perfil = JSON.parse(
-        localStorage.getItem("reportard_profile") || "{}",
+      const usuario = JSON.parse(
+        localStorage.getItem("reportard_user") || "{}",
       );
+
+      const miId = String(usuario._id || usuario.id || "");
+      const autorId = String(publicacion.autorId || "");
 
       return (
         publicacion.esPropia === true ||
-        publicacion.autor === perfil.nombre ||
-        publicacion.autor === "Danny Torres"
+        (Boolean(miId) && miId === autorId)
       );
     } catch {
       return publicacion.esPropia === true;
     }
   })();
+
+  const eliminarContenido = async () => {
+    const token = localStorage.getItem("reportard_token") || "";
+
+    if (!token || !publicacion.id) {
+      throw new Error("No se pudo identificar la publicación o la sesión.");
+    }
+
+    await eliminarPublicacion(token, publicacion.id);
+    setEliminada(true);
+  };
 
   const abrirPerfil = () => {
     if (publicacion.autorId) {
@@ -227,8 +250,12 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
 
     const comentario = {
       id: Date.now(),
-      autor: "Danny Torres",
-      iniciales: "DT",
+      autor: usuarioActual.nombre || "Ciudadano ReportaRD",
+      iniciales: (usuarioActual.nombre || "RD")
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((parte) => parte.charAt(0).toUpperCase())
+        .join(""),
       contenido,
       tiempo: "Ahora",
       respuestas: [],
@@ -259,7 +286,7 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
             ...comentario.respuestas,
             {
               id: Date.now(),
-              autor: "Danny Torres",
+              autor: usuarioActual.nombre || "Ciudadano ReportaRD",
               contenido,
               tiempo: "Ahora",
             },
@@ -302,7 +329,7 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
     }
   };
 
-  if (oculto) return null;
+  if (oculto || eliminada) return null;
 
   return (
     <article className="group/card overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.045] to-white/[0.025] shadow-xl shadow-black/10 transition duration-300 hover:border-white/[0.16]">
@@ -350,6 +377,7 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
           onEditar={() =>
             navigate(`/publicar?editar=${publicacion.id ?? "actual"}`)
           }
+          onEliminar={eliminarContenido}
         />
       </header>
 

@@ -43,6 +43,7 @@ export default function ContentOptions({
   esPropio = false,
   onOcultar,
   onEditar,
+  onEliminar,
 }) {
   const esReporte = tipo === "reporte";
   const determinante = esReporte ? "este" : "esta";
@@ -52,6 +53,8 @@ export default function ContentOptions({
   const [mostrarReporte, setMostrarReporte] = useState(false);
   const [motivoSeleccionado, setMotivoSeleccionado] = useState("");
   const [aviso, setAviso] = useState("");
+  const [procesando, setProcesando] = useState(false);
+  const [errorAccion, setErrorAccion] = useState("");
 
   const mostrarAviso = (texto) => {
     setAviso(texto);
@@ -74,40 +77,55 @@ export default function ContentOptions({
     setAccionPendiente(accion);
   };
 
-  const confirmarAccion = () => {
+  const confirmarAccion = async () => {
     if (!accionPendiente) return;
 
-    if (accionPendiente === "ocultar") {
-      agregarALista("reportard_hidden_content", contenidoId);
-      mostrarAviso(`${tipo} ${participioOculto}`);
+    try {
+      setProcesando(true);
+      setErrorAccion("");
+
+      if (accionPendiente === "ocultar") {
+        agregarALista("reportard_hidden_content", contenidoId);
+        mostrarAviso(`${tipo} ${participioOculto}`);
+      }
+
+      if (accionPendiente === "silenciar") {
+        agregarALista("reportard_muted_users", autor);
+        mostrarAviso(`${autor} fue silenciado`);
+      }
+
+      if (accionPendiente === "bloquear") {
+        agregarALista("reportard_blocked_users", autor);
+        mostrarAviso(`${autor} fue bloqueado`);
+      }
+
+      if (accionPendiente === "eliminar") {
+        if (!onEliminar) {
+          throw new Error("Esta opción todavía no está disponible.");
+        }
+
+        await onEliminar();
+        mostrarAviso(`${tipo} eliminada`);
+      }
+
+      const accionRealizada = accionPendiente;
+      setAccionPendiente(null);
+
+      window.setTimeout(() => {
+        if (accionRealizada !== "eliminar") {
+          onOcultar?.(accionRealizada);
+        }
+        window.dispatchEvent(
+          new CustomEvent("reportard_moderation_changed", {
+            detail: { accion: accionRealizada, contenidoId, autor },
+          }),
+        );
+      }, 300);
+    } catch (error) {
+      setErrorAccion(error.message || "No se pudo completar la acción.");
+    } finally {
+      setProcesando(false);
     }
-
-    if (accionPendiente === "silenciar") {
-      agregarALista("reportard_muted_users", autor);
-      mostrarAviso(`${autor} fue silenciado`);
-    }
-
-    if (accionPendiente === "bloquear") {
-      agregarALista("reportard_blocked_users", autor);
-      mostrarAviso(`${autor} fue bloqueado`);
-    }
-
-    if (accionPendiente === "eliminar") {
-      agregarALista("reportard_deleted_content", contenidoId);
-      mostrarAviso(`${tipo} eliminada`);
-    }
-
-    const accionRealizada = accionPendiente;
-    setAccionPendiente(null);
-
-    window.setTimeout(() => {
-      onOcultar?.(accionRealizada);
-      window.dispatchEvent(
-        new CustomEvent("reportard_moderation_changed", {
-          detail: { accion: accionRealizada, contenidoId, autor },
-        }),
-      );
-    }, 900);
   };
 
   const enviarReporte = () => {
@@ -199,18 +217,22 @@ export default function ContentOptions({
 
             {esPropio ? (
               <>
-                <Opcion
-                  icono={Pencil}
-                  texto="Editar contenido"
-                  color="text-blue-400"
-                  onClick={() => solicitarAccion("editar")}
-                />
-                <Opcion
-                  icono={Trash2}
-                  texto="Eliminar contenido"
-                  color="text-red-400"
-                  onClick={() => solicitarAccion("eliminar")}
-                />
+                {onEditar && (
+                  <Opcion
+                    icono={Pencil}
+                    texto="Editar contenido"
+                    color="text-blue-400"
+                    onClick={() => solicitarAccion("editar")}
+                  />
+                )}
+                {onEliminar && (
+                  <Opcion
+                    icono={Trash2}
+                    texto="Eliminar contenido"
+                    color="text-red-400"
+                    onClick={() => solicitarAccion("eliminar")}
+                  />
+                )}
               </>
             ) : (
               <>
@@ -254,6 +276,12 @@ export default function ContentOptions({
               {confirmacion.descripcion}
             </p>
 
+            {errorAccion && (
+              <p className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                {errorAccion}
+              </p>
+            )}
+
             <div className="mt-6 grid grid-cols-2 gap-3">
               <button
                 type="button"
@@ -265,9 +293,10 @@ export default function ContentOptions({
               <button
                 type="button"
                 onClick={confirmarAccion}
+                disabled={procesando}
                 className="rounded-2xl bg-red-500 px-4 py-3 font-semibold text-white transition hover:bg-red-400 active:scale-[0.98]"
               >
-                {confirmacion.boton}
+                {procesando ? "Procesando…" : confirmacion.boton}
               </button>
             </div>
           </div>

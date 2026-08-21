@@ -9,7 +9,6 @@ import {
   Lightbulb,
   LogOut,
   Map,
-  MapPin,
   Megaphone,
   MessageCircle,
   Menu,
@@ -54,168 +53,6 @@ const categorias = [
   },
 ];
 
-const contenidoFeed = [
-  {
-    id: "post-video-debate-rd",
-    tipo: "publicacion",
-    datos: {
-      id: "post-video-debate-rd",
-      autor: "Actualidad Dominicana",
-      iniciales: "AD",
-      verificado: false,
-      comunidad: "Debate ciudadano",
-      tiempo: "Hace 3 min",
-      contenido:
-        "Una declaración que está generando conversación en las redes dominicanas. Recuerda participar con respeto: ¿qué opinas? 🇩🇴",
-      mediaUrl: "/videos/debate-ciudadano-rd.mp4",
-      mediaTipo: "video",
-      mediaPoster: "/images/debate-ciudadano-rd.jpg",
-      reacciones: 86,
-      comentarios: 31,
-      compartidos: 18,
-    },
-  },
-  {
-    id: "post-video-policia-rd",
-    tipo: "publicacion",
-    datos: {
-      id: "post-video-policia-rd",
-      autor: "Comunidad ReportaRD",
-      iniciales: "CR",
-      verificado: true,
-      comunidad: "República Dominicana",
-      tiempo: "Hace 6 min",
-      contenido:
-        "Un momento de la comunidad policial que se ha vuelto popular. También queremos mostrar el lado cercano y cotidiano de nuestro país.",
-      mediaUrl: "/videos/policia-comunidad-rd.mp4",
-      mediaTipo: "video",
-      mediaPoster: "/images/policia-comunidad-rd.jpg",
-      reacciones: 143,
-      comentarios: 22,
-      compartidos: 35,
-    },
-  },
-  {
-    id: "post-video-entretenimiento-rd",
-    tipo: "publicacion",
-    datos: {
-      id: "post-video-entretenimiento-rd",
-      autor: "Voces de RD",
-      iniciales: "VR",
-      verificado: false,
-      comunidad: "Entretenimiento dominicano",
-      tiempo: "Hace 9 min",
-      contenido:
-        "El humor y las ocurrencias que también forman parte de nuestras conversaciones diarias. ¿Qué te pareció este momento? 🇩🇴",
-      mediaUrl: "/videos/entretenimiento-dominicano-rd.mp4",
-      mediaTipo: "video",
-      mediaPoster: "/images/entretenimiento-dominicano-rd.jpg",
-      reacciones: 214,
-      comentarios: 47,
-      compartidos: 52,
-    },
-  },
-  {
-    id: "post-1",
-    tipo: "publicacion",
-    datos: {
-      id: "post-1",
-      autorId: 3,
-      autor: "María Fernández",
-      iniciales: "MF",
-      verificado: true,
-      comunidad: "Los Jardines",
-      tiempo: "Hace 8 min",
-      contenido:
-        "Este sábado estaremos realizando una jornada de limpieza en el parque del sector. Todos los vecinos están invitados. 🇩🇴",
-      mediaUrl:
-        "https://images.unsplash.com/photo-1758599667717-27c61bcdd14b?auto=format&fit=crop&w=1200&q=82",
-      mediaTipo: "imagen",
-      mediaAlt:
-        "Voluntarios participando en una jornada comunitaria de limpieza",
-      reacciones: 24,
-      comentarios: 6,
-      compartidos: 4,
-    },
-  },
-  {
-    id: "report-1",
-    tipo: "reporte",
-    datos: {
-      id: "report-1",
-      autorId: 1,
-      autor: "Laura Méndez",
-      iniciales: "LM",
-      verificado: true,
-      comunidad: "Santiago Centro",
-      tiempo: "Hace 15 min",
-      categoria: "Infraestructura",
-      estado: "Pendiente",
-      titulo: "Hueco peligroso en la avenida",
-      descripcion:
-        "Este hueco lleva más de una semana causando problemas a los conductores. Durante la noche es difícil verlo y puede provocar un accidente.",
-      ubicacion: "Av. Estrella Sadhalá, Santiago",
-      mediaUrl:
-        "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=1200&q=82",
-      mediaTipo: "imagen",
-      mediaAlt:
-        "Avenida urbana donde fue reportado un daño en el pavimento",
-      confirmaciones: 32,
-      comentarios: 8,
-      compartidos: 12,
-    },
-  },
-  {
-    id: "post-2",
-    tipo: "publicacion",
-    datos: {
-      id: "post-2",
-      autorId: 4,
-      autor: "José Martínez",
-      iniciales: "JM",
-      verificado: false,
-      comunidad: "Cienfuegos",
-      tiempo: "Hace 26 min",
-      contenido:
-        "Gracias a todos los vecinos que ayudaron a recuperar el área verde. Cuando una comunidad se organiza, los cambios sí se notan.",
-      mediaUrl:
-        "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-      mediaTipo: "video",
-      mediaPoster:
-        "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=82",
-      reacciones: 41,
-      comentarios: 11,
-      compartidos: 9,
-    },
-  },
-  {
-    id: "report-2",
-    tipo: "reporte",
-    datos: {
-      id: "report-2",
-      autorId: 2,
-      autor: "Carlos Ramírez",
-      iniciales: "CR",
-      verificado: false,
-      comunidad: "Los Jardines",
-      tiempo: "Hace 32 min",
-      categoria: "Alumbrado",
-      estado: "En revisión",
-      titulo: "Poste de luz averiado",
-      descripcion:
-        "La calle lleva varios días completamente oscura. Los residentes solicitamos que sea revisado lo antes posible.",
-      ubicacion: "Calle Duarte, Santiago",
-      mediaUrl:
-        "https://images.unsplash.com/photo-1697722229764-2ee3445a5045?auto=format&fit=crop&w=1200&q=82",
-      mediaTipo: "imagen",
-      mediaAlt:
-        "Calle de noche con iluminación urbana que necesita revisión",
-      confirmaciones: 18,
-      comentarios: 5,
-      compartidos: 7,
-    },
-  },
-];
 
 const perfilInicial = {
   nombre: "Ciudadano ReportaRD",
@@ -225,16 +62,18 @@ const perfilInicial = {
 
 const obtenerPerfilGuardado = () => {
   try {
-    const usuarioAutenticado = localStorage.getItem("reportard_user");
-    const perfilEditado = localStorage.getItem("reportard_profile");
-    const datos = usuarioAutenticado || perfilEditado;
+    const usuarioAutenticado = JSON.parse(
+      localStorage.getItem("reportard_user") || "{}",
+    );
+    const perfilEditado = JSON.parse(
+      localStorage.getItem("reportard_profile") || "{}",
+    );
 
-    return datos
-      ? {
-        ...perfilInicial,
-        ...JSON.parse(datos),
-      }
-      : perfilInicial;
+    return {
+      ...perfilInicial,
+      ...usuarioAutenticado,
+      ...perfilEditado,
+    };
   } catch {
     return perfilInicial;
   }
@@ -293,49 +132,6 @@ const obtenerIniciales = (nombre) => {
     .join("");
 };
 
-const historiasIniciales = [
-  {
-    id: "historia-maria",
-    autor: "María Fernández",
-    iniciales: "MF",
-    tiempo: "Hace 12 min",
-    texto: "Hoy nos unimos para recuperar el parque del sector. 🌳",
-    color: "from-violet-600 via-fuchsia-600 to-red-500",
-    vistas: 86,
-    activo: true,
-  },
-  {
-    id: "historia-laura",
-    autor: "Laura Méndez",
-    iniciales: "LM",
-    tiempo: "Hace 28 min",
-    texto: "Reporte confirmado: brigadas revisando la avenida Estrella Sadhalá.",
-    color: "from-blue-600 via-cyan-500 to-emerald-500",
-    vistas: 54,
-    activo: true,
-  },
-  {
-    id: "historia-jose",
-    autor: "José Martínez",
-    iniciales: "JM",
-    tiempo: "Hace 1 h",
-    texto: "Cuando la comunidad participa, el cambio se nota. 🇩🇴",
-    color: "from-amber-500 via-orange-500 to-red-600",
-    vistas: 121,
-    activo: false,
-  },
-  {
-    id: "historia-santiago",
-    autor: "Santiago Verde",
-    iniciales: "SV",
-    tiempo: "Hace 2 h",
-    texto: "Nueva jornada de reciclaje este sábado. ¡Te esperamos!",
-    color: "from-emerald-600 via-green-500 to-cyan-500",
-    vistas: 73,
-    activo: true,
-  },
-];
-
 const coloresHistoria = [
   "from-blue-600 via-violet-600 to-red-500",
   "from-emerald-600 via-cyan-500 to-blue-600",
@@ -392,8 +188,8 @@ export default function Home({ onLogout }) {
     coloresHistoria[0],
   );
 
-  const historias = [...historiasPropias, ...historiasIniciales];
-  const elementosFeed = [...publicacionesReales, ...contenidoFeed];
+  const historias = historiasPropias;
+  const elementosFeed = publicacionesReales;
 
   useEffect(() => {
     let vigente = true;
@@ -578,7 +374,6 @@ export default function Home({ onLogout }) {
             >
               <Bell size={21} />
 
-              <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full border-2 border-[#06101f] bg-red-500" />
             </button>
           </div>
 
@@ -615,13 +410,11 @@ export default function Home({ onLogout }) {
                     ¡Hola, {primerNombre}! 👋
                   </p>
 
-                  <span className="flex shrink-0 items-center gap-1 rounded-full border border-white/5 bg-white/5 px-2.5 py-1 text-[10px] text-slate-400">
-                    <MapPin
-                      size={12}
-                      className="text-red-400"
-                    />
-                    Santiago
-                  </span>
+                  {perfil.ubicacion && (
+                    <span className="max-w-[11rem] truncate rounded-full border border-white/5 bg-white/5 px-2.5 py-1 text-[10px] text-slate-400">
+                      {perfil.ubicacion}
+                    </span>
+                  )}
                 </div>
 
                 <div className="mt-1 flex w-full justify-center">
@@ -655,12 +448,9 @@ export default function Home({ onLogout }) {
               <button
                 type="button"
                 onClick={() => navigate("/en-vivo")}
-                className="group flex items-center gap-1.5 rounded-full border border-red-500/15 bg-red-500/10 px-2.5 py-1 text-[10px] font-semibold text-red-400 transition hover:border-red-400/30 hover:bg-red-500/15 active:scale-95"
+                className="flex items-center gap-1.5 rounded-full border border-red-500/15 bg-red-500/10 px-2.5 py-1 text-[10px] font-semibold text-red-400 transition hover:border-red-400/30 hover:bg-red-500/15 active:scale-95"
               >
-                <span className="relative flex h-3 w-3 items-center justify-center">
-                  <span className="absolute h-3 w-3 animate-ping rounded-full bg-red-500/35 [animation-duration:1.8s]" />
-                  <Radio size={12} className="relative" />
-                </span>
+                <Radio size={12} />
                 Crear directo
               </button>
             </div>
@@ -725,37 +515,11 @@ export default function Home({ onLogout }) {
                 </span>
               </div>
 
-              {historiasIniciales.map((historia, indice) => (
-                <button
-                  type="button"
-                  key={historia.id}
-                  onClick={() =>
-                    setHistoriaActiva(historiasPropias.length + indice)
-                  }
-                  style={{ animationDelay: `${indice * 70}ms` }}
-                  className="story-enter group flex w-[72px] shrink-0 flex-col items-center gap-2"
-                >
-                  <span
-                    className={`relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br p-[2px] transition duration-300 group-hover:-translate-y-1 group-hover:scale-105 group-active:scale-95 ${historia.color}`}
-                  >
-                    <span className="flex h-full w-full items-center justify-center rounded-full border-2 border-[#06101f] bg-[#0b1626] text-sm font-bold text-white">
-                      {historia.iniciales}
-                    </span>
-
-                    {historia.activo && (
-                      <span
-                        title="Activo ahora"
-                        aria-label="Activo ahora"
-                        className="absolute bottom-1 right-0 h-3 w-3 rounded-full border-2 border-[#06101f] bg-green-400 shadow-[0_0_8px_rgba(74,222,128,.75)]"
-                      />
-                    )}
-                  </span>
-
-                  <span className="w-full truncate text-center text-[10px] text-slate-400 transition group-hover:text-white">
-                    {historia.autor.split(" ")[0]}
-                  </span>
-                </button>
-              ))}
+              {historias.length === 0 && (
+                <div className="flex min-h-20 flex-1 items-center rounded-2xl border border-dashed border-white/10 px-4 text-xs leading-5 text-slate-500">
+                  Todavía no hay historias reales. Sé la primera persona en compartir una.
+                </div>
+              )}
             </div>
           </section>
 
@@ -891,7 +655,7 @@ export default function Home({ onLogout }) {
 
               {errorFeed && (
                 <div className="rounded-2xl border border-amber-400/15 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-                  {errorFeed} El contenido de demostración sigue disponible.
+                  {errorFeed}
                 </div>
               )}
 
@@ -899,6 +663,24 @@ export default function Home({ onLogout }) {
                 <div className="flex items-center gap-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-400">
                   <span className="h-2 w-2 rounded-full bg-emerald-400" />
                   Publicaciones reales
+                </div>
+              )}
+
+              {!cargandoFeed && !errorFeed && elementosFeed.length === 0 && (
+                <div className="rounded-3xl border border-dashed border-white/10 bg-white/[0.025] px-6 py-10 text-center">
+                  <h3 className="font-semibold text-slate-200">
+                    Aún no hay publicaciones
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Sé la primera persona en compartir algo con la comunidad.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/publicar")}
+                    className="mt-5 rounded-2xl bg-red-500 px-5 py-3 text-sm font-semibold text-white"
+                  >
+                    Crear publicación
+                  </button>
                 </div>
               )}
 
@@ -1031,10 +813,6 @@ export default function Home({ onLogout }) {
                 : "shadow-red-500/30 hover:-translate-y-1"
               }`}
           >
-            {!menuAccionesAbierto && (
-              <span className="absolute inset-1 animate-ping rounded-full bg-red-400/20 [animation-duration:2.6s]" />
-            )}
-
             <span className="absolute inset-1 rounded-full border border-white/15" />
 
             <Plus

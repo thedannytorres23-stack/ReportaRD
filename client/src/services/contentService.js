@@ -1,25 +1,28 @@
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:5000/api";
+const API_URL = (
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api"
+).replace(/\/$/, "");
 
 const procesarRespuesta = async (respuesta) => {
-  const datos = await respuesta.json();
+  let datos;
+
+  try {
+    datos = await respuesta.json();
+  } catch (error) {
+    throw new Error("El servidor devolvió una respuesta inválida.", {
+      cause: error,
+    });
+  }
 
   if (!respuesta.ok) {
     throw new Error(
-      datos.mensaje ||
-        "No se pudo completar la solicitud.",
+      datos.mensaje || "No se pudo completar la solicitud."
     );
   }
 
   return datos;
 };
 
-const solicitar = async (
-  ruta,
-  token,
-  opciones = {},
-) => {
+const solicitar = async (ruta, token, opciones = {}) => {
   let respuesta;
 
   try {
@@ -31,16 +34,19 @@ const solicitar = async (
         ...opciones.headers,
       },
     });
-  } catch {
+  } catch (error) {
     throw new Error(
       "No se pudo conectar con ReportaRD Backend.",
+      {
+        cause: error,
+      }
     );
   }
 
   return procesarRespuesta(respuesta);
 };
 
-const crearConsulta = (busqueda) => {
+const crearConsulta = (busqueda = "") => {
   const parametros = new URLSearchParams();
 
   if (busqueda.trim()) {
@@ -54,27 +60,27 @@ const crearConsulta = (busqueda) => {
 
 export const listarPublicaciones = (
   token,
-  busqueda = "",
+  busqueda = ""
 ) => {
   return solicitar(
     `/posts${crearConsulta(busqueda)}`,
-    token,
+    token
   );
 };
 
 export const listarReportes = (
   token,
-  busqueda = "",
+  busqueda = ""
 ) => {
   return solicitar(
     `/reports${crearConsulta(busqueda)}`,
-    token,
+    token
   );
 };
 
 export const crearPublicacion = (
   token,
-  datos,
+  datos
 ) => {
   return solicitar("/posts", token, {
     method: "POST",
@@ -82,7 +88,23 @@ export const crearPublicacion = (
   });
 };
 
-export const crearReporte = (token, datos) => {
+export const eliminarPublicacion = (
+  token,
+  publicacionId
+) => {
+  return solicitar(
+    `/posts/${publicacionId}`,
+    token,
+    {
+      method: "DELETE",
+    }
+  );
+};
+
+export const crearReporte = (
+  token,
+  datos
+) => {
   return solicitar("/reports", token, {
     method: "POST",
     body: JSON.stringify(datos),

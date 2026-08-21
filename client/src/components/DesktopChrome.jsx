@@ -57,9 +57,9 @@ const CONTEXTOS = {
   ],
   "/en-vivo": [
     "En vivo",
-    "Transmite lo que ocurre",
-    "Prepara una transmisión responsable y comparte información útil en tiempo real.",
-    ["Describe claramente el lugar", "Evita mostrar datos privados", "Finaliza cuando termine el evento"],
+    "Comparte lo que ocurre",
+    "Accede al módulo de directos de ReportaRD.",
+    ["Describe claramente el contexto", "Protege la privacidad de terceros", "Usa el directo de forma responsable"],
   ],
   "/notificaciones": [
     "Actividad",
@@ -125,53 +125,6 @@ export default function DesktopChrome({ onLogout }) {
     if (perfilCompletado < 100) return true;
     return localStorage.getItem("reportard_profile_completed_seen") !== "true";
   });
-
-  useLayoutEffect(() => {
-    if (
-      window.innerWidth < 1024 ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) return undefined;
-
-    const contextoGsap = gsap.context(() => {
-      const centro = document.querySelector("[data-reportard-main] .max-w-md");
-      const paneles = [izquierdaRef.current, centro, derechaRef.current].filter(Boolean);
-      const linea = gsap.timeline({ defaults: { ease: "power3.out" } });
-
-      gsap.set(paneles, { willChange: "transform, opacity" });
-      linea
-        .fromTo(izquierdaRef.current, { x: -30, opacity: 0 }, { x: 0, opacity: 1, duration: 0.62 })
-        .fromTo(centro, { y: 18, opacity: 0, scale: 0.988 }, { y: 0, opacity: 1, scale: 1, duration: 0.68 }, "-=0.42");
-
-      if (derechaRef.current) {
-        linea.fromTo(derechaRef.current, { x: 30, opacity: 0 }, { x: 0, opacity: 1, duration: 0.62 }, "-=0.5");
-      }
-
-      linea.fromTo("[data-desktop-nav]", { x: -10, opacity: 0 }, {
-        x: 0, opacity: 1, duration: 0.28, stagger: 0.035,
-        clearProps: "transform,opacity",
-      }, "-=0.34");
-
-      linea.eventCallback("onComplete", () => {
-        gsap.set(paneles, { clearProps: "willChange,transform,opacity" });
-      });
-    }, raizRef);
-
-    return () => contextoGsap.revert();
-  }, []);
-
-  useLayoutEffect(() => {
-    if (
-      window.innerWidth < 1280 ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-      !derechaRef.current
-    ) return undefined;
-
-    const elemento = derechaRef.current.querySelector("[data-route-context]");
-    const animacion = gsap.fromTo(elemento, { y: 7, opacity: 0.7 }, {
-      y: 0, opacity: 1, duration: 0.3, ease: "power2.out",
-    });
-    return () => animacion.kill();
-  }, [location.pathname]);
 
   useLayoutEffect(() => {
     if (perfilCompletado < 100 || !mostrarProgresoPerfil) return undefined;
@@ -272,7 +225,6 @@ export default function DesktopChrome({ onLogout }) {
               {perfil.foto ? (
                 <img src={perfil.foto} alt={`Foto de ${perfil.nombre}`} className="h-full w-full object-cover" />
               ) : iniciales}
-              <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#0c192b] bg-emerald-400" />
             </span>
             <span className="min-w-0 flex-1">
               <strong className="block truncate text-sm text-slate-100">{perfil.nombre}</strong>
@@ -325,7 +277,7 @@ export default function DesktopChrome({ onLogout }) {
           <div className="border-b border-white/[0.07] px-5 py-5">
             <div className="flex items-center justify-between gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-400/15 bg-blue-500/10 text-blue-300"><Compass size={19} /></span>
-              <span className="rounded-full border border-emerald-400/15 bg-emerald-500/[0.08] px-2.5 py-1 text-[8px] font-bold uppercase tracking-[0.15em] text-emerald-300">Sesión protegida</span>
+              <span className="rounded-full border border-emerald-400/15 bg-emerald-500/[0.08] px-2.5 py-1 text-[8px] font-bold uppercase tracking-[0.15em] text-emerald-300">Sesión iniciada</span>
             </div>
             <p className="mt-5 text-[9px] font-bold uppercase tracking-[0.22em] text-blue-400">{etiqueta}</p>
             <h2 className="mt-2 text-xl font-bold leading-tight text-slate-100">{titulo}</h2>
