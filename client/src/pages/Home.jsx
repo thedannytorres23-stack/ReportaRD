@@ -28,7 +28,10 @@ import PostCard from "../components/PostCard";
 import ReportCard from "../components/ReportCard";
 import SideMenu from "../components/SideMenu";
 import CommunityRadar from "../components/CommunityRadar";
-import { listarPublicaciones } from "../services/contentService";
+import {
+  listarPublicaciones,
+  listarReportes,
+} from "../services/contentService";
 
 const categorias = [
   {
@@ -113,10 +116,54 @@ const convertirPublicacion = (publicacion) => {
       verificado: false,
       comunidad: publicacion.comunidad || "Comunidad ReportaRD",
       tiempo: formatearTiempo(publicacion.createdAt),
+      titulo: publicacion.titulo || "",
       contenido: publicacion.contenido,
       mediaUrl: publicacion.mediaUrl || null,
       mediaTipo: publicacion.mediaTipo || null,
       reacciones: 0,
+      comentarios: 0,
+      compartidos: 0,
+    },
+  };
+};
+
+
+
+const convertirReporte = (reporte) => {
+  const autor = reporte.autor || {};
+  const nombreAutor =
+    autor.nombre || "Ciudadano ReportaRD";
+
+  return {
+    id: reporte._id,
+    tipo: "reporte",
+    fechaOrden: reporte.createdAt,
+    datos: {
+      id: reporte._id,
+      autorId: autor._id,
+      autor: nombreAutor,
+      iniciales: obtenerIniciales(nombreAutor) || "RD",
+      foto: autor.foto || "",
+      verificado: false,
+
+      comunidad: "ReportaRD",
+      tiempo: formatearTiempo(reporte.createdAt),
+
+      categoria: reporte.categoria,
+      estado: reporte.estado,
+      titulo: reporte.titulo,
+      descripcion: reporte.descripcion,
+      ubicacion: reporte.ubicacion,
+
+      coordenadas: reporte.coordenadas || {
+        latitud: null,
+        longitud: null,
+      },
+
+      mediaUrl: reporte.mediaUrl || null,
+      mediaTipo: reporte.mediaTipo || null,
+
+      confirmaciones: reporte.confirmaciones || 0,
       comentarios: 0,
       compartidos: 0,
     },
@@ -158,7 +205,8 @@ export default function Home({ onLogout }) {
   const location = useLocation();
 
   const [perfil] = useState(obtenerPerfilGuardado);
-  const [publicacionesReales, setPublicacionesReales] = useState([]);
+  const [contenidoReal, setContenidoReal] =
+    useState([]);
   const [cargandoFeed, setCargandoFeed] = useState(true);
   const [errorFeed, setErrorFeed] = useState("");
 
@@ -189,7 +237,7 @@ export default function Home({ onLogout }) {
   );
 
   const historias = historiasPropias;
-  const elementosFeed = publicacionesReales;
+  const elementosFeed = contenidoReal;
 
   useEffect(() => {
     let vigente = true;
@@ -206,12 +254,36 @@ export default function Home({ onLogout }) {
       }
 
       try {
-        const datos = await listarPublicaciones(token);
+        const [
+          respuestaPublicaciones,
+          respuestaReportes,
+        ] = await Promise.all([
+          listarPublicaciones(token),
+          listarReportes(token),
+        ]);
+
+        const publicaciones = (
+          respuestaPublicaciones.publicaciones || []
+        ).map((publicacion) => ({
+          ...convertirPublicacion(publicacion),
+          fechaOrden: publicacion.createdAt,
+        }));
+
+        const reportes = (
+          respuestaReportes.reportes || []
+        ).map(convertirReporte);
+
+        const contenidoOrdenado = [
+          ...publicaciones,
+          ...reportes,
+        ].sort(
+          (a, b) =>
+            new Date(b.fechaOrden).getTime() -
+            new Date(a.fechaOrden).getTime(),
+        );
 
         if (vigente) {
-          setPublicacionesReales(
-            (datos.publicaciones || []).map(convertirPublicacion),
-          );
+          setContenidoReal(contenidoOrdenado);
           setErrorFeed("");
         }
       } catch (errorSolicitud) {
@@ -470,8 +542,8 @@ export default function Home({ onLogout }) {
                 >
                   <span
                     className={`relative flex h-16 w-16 items-center justify-center rounded-full transition duration-300 group-hover:scale-105 group-active:scale-95 ${historiasPropias.length > 0
-                        ? `bg-gradient-to-br p-[2px] ${historiasPropias[0].color}`
-                        : "border border-dashed border-blue-400/50 bg-blue-500/10"
+                      ? `bg-gradient-to-br p-[2px] ${historiasPropias[0].color}`
+                      : "border border-dashed border-blue-400/50 bg-blue-500/10"
                       }`}
                   >
                     <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-[#06101f] bg-[#0b1626] text-sm font-bold text-white">
@@ -659,10 +731,10 @@ export default function Home({ onLogout }) {
                 </div>
               )}
 
-              {publicacionesReales.length > 0 && (
+              {contenidoReal.length > 0 && (
                 <div className="flex items-center gap-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-400">
                   <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  Publicaciones reales
+                  Actividad Reciente
                 </div>
               )}
 
@@ -721,8 +793,8 @@ export default function Home({ onLogout }) {
               navigate("/publicar");
             }}
             className={`pointer-events-auto absolute bottom-0 left-7 flex flex-col items-center gap-2 transition-all duration-300 ease-out ${menuAccionesAbierto
-                ? "translate-x-0 translate-y-0 scale-100 opacity-100"
-                : "translate-x-20 translate-y-16 scale-50 opacity-0"
+              ? "translate-x-0 translate-y-0 scale-100 opacity-100"
+              : "translate-x-20 translate-y-16 scale-50 opacity-0"
               }`}
           >
             <span className="flex h-13 w-13 items-center justify-center rounded-2xl border border-blue-300/20 bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-xl shadow-blue-500/30 transition hover:-translate-y-1 active:scale-90">
@@ -740,8 +812,8 @@ export default function Home({ onLogout }) {
               setMostrarCrearHistoria(true);
             }}
             className={`pointer-events-auto absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 transition-all delay-75 duration-300 ease-out ${menuAccionesAbierto
-                ? "translate-y-0 scale-100 opacity-100"
-                : "translate-y-20 scale-50 opacity-0"
+              ? "translate-y-0 scale-100 opacity-100"
+              : "translate-y-20 scale-50 opacity-0"
               }`}
           >
             <span className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-300/20 bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-xl shadow-violet-500/30 transition hover:-translate-y-1 active:scale-90">
@@ -762,8 +834,8 @@ export default function Home({ onLogout }) {
               navigate("/reportar");
             }}
             className={`pointer-events-auto absolute bottom-0 right-7 flex flex-col items-center gap-2 transition-all delay-150 duration-300 ease-out ${menuAccionesAbierto
-                ? "translate-x-0 translate-y-0 scale-100 opacity-100"
-                : "-translate-x-20 translate-y-16 scale-50 opacity-0"
+              ? "translate-x-0 translate-y-0 scale-100 opacity-100"
+              : "-translate-x-20 translate-y-16 scale-50 opacity-0"
               }`}
           >
             <span className="flex h-13 w-13 items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500 to-orange-500 text-white shadow-xl shadow-red-500/30 transition hover:-translate-y-1 active:scale-90">
@@ -809,8 +881,8 @@ export default function Home({ onLogout }) {
             }
             aria-expanded={menuAccionesAbierto}
             className={`group relative -mt-8 flex h-16 w-16 items-center justify-center rounded-full border-4 border-[#06101f] bg-gradient-to-br from-red-500 via-red-500 to-orange-500 text-white shadow-xl transition-all duration-300 active:scale-90 ${menuAccionesAbierto
-                ? "scale-110 shadow-red-500/50"
-                : "shadow-red-500/30 hover:-translate-y-1"
+              ? "scale-110 shadow-red-500/50"
+              : "shadow-red-500/30 hover:-translate-y-1"
               }`}
           >
             <span className="absolute inset-1 rounded-full border border-white/15" />
@@ -1027,8 +1099,8 @@ export default function Home({ onLogout }) {
                       onClick={() => setColorHistoria(color)}
                       aria-label="Seleccionar estilo"
                       className={`h-10 flex-1 rounded-xl bg-gradient-to-br transition active:scale-95 ${color} ${colorHistoria === color
-                          ? "ring-2 ring-white ring-offset-2 ring-offset-[#0b1626]"
-                          : "opacity-60 hover:opacity-100"
+                        ? "ring-2 ring-white ring-offset-2 ring-offset-[#0b1626]"
+                        : "opacity-60 hover:opacity-100"
                         }`}
                     />
                   ))}

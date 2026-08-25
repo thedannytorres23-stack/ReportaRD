@@ -10,13 +10,13 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import ContentOptions from "./ContentOptions";
+import { eliminarReporte } from "../services/contentService";
 
 export default function ReportCard({ reporte, modoDetalle = false }) {
   const navigate = useNavigate();
 
-  const idModeracion = `report-${
-    reporte.id ?? `${reporte.autor}-${reporte.tiempo}`
-  }`;
+  const idModeracion = `report-${reporte.id ?? `${reporte.autor}-${reporte.tiempo}`
+    }`;
 
   const [oculto, setOculto] = useState(() => {
     try {
@@ -31,7 +31,10 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
       );
       const bloqueados = JSON.parse(
         localStorage.getItem("reportard_blocked_users") || "[]",
+
       );
+
+
 
       return (
         ocultos.includes(idModeracion) ||
@@ -43,6 +46,35 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
       return false;
     }
   });
+
+  const eliminarContenido = async () => {
+  if (!reporte.id) {
+    throw new Error(
+      "No se encontró el identificador del reporte.",
+    );
+  }
+
+  const token =
+    localStorage.getItem("reportard_token") || "";
+
+  if (!token) {
+    throw new Error(
+      "Tu sesión expiró. Inicia sesión nuevamente.",
+    );
+  }
+
+  await eliminarReporte(token, reporte.id);
+
+  setOculto(true);
+
+  window.dispatchEvent(
+    new CustomEvent("reportard_report_deleted", {
+      detail: {
+        reporteId: reporte.id,
+      },
+    }),
+  );
+};
 
   const esPropio = (() => {
     try {
@@ -321,6 +353,7 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
           tipo="reporte"
           esPropio={esPropio}
           onOcultar={() => setOculto(true)}
+          onEliminar={eliminarContenido}
           onEditar={() =>
             navigate(`/reportar?editar=${reporte.id ?? "actual"}`)
           }
@@ -340,9 +373,8 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
 
         <h3
           onClick={abrirDetalle}
-          className={`mt-4 text-lg font-bold text-white ${
-            modoDetalle ? "" : "cursor-pointer hover:text-red-300"
-          }`}
+          className={`mt-4 text-lg font-bold text-white ${modoDetalle ? "" : "cursor-pointer hover:text-red-300"
+            }`}
         >
           {reporte.titulo}
         </h3>

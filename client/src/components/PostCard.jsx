@@ -22,9 +22,8 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
     }
   })();
 
-  const idModeracion = `post-${
-    publicacion.id ?? `${publicacion.autor}-${publicacion.tiempo}`
-  }`;
+  const idModeracion = `post-${publicacion.id ?? `${publicacion.autor}-${publicacion.tiempo}`
+    }`;
 
   const [oculto, setOculto] = useState(() => {
     try {
@@ -109,9 +108,8 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
 
   const clavePublicacion = useMemo(
     () =>
-      `reportard_post_${
-        publicacion.id ??
-        `${publicacion.autor}_${publicacion.tiempo}`
+      `reportard_post_${publicacion.id ??
+      `${publicacion.autor}_${publicacion.tiempo}`
       }`,
     [publicacion],
   );
@@ -209,12 +207,23 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
 
   useEffect(() => {
     const actualizarModeracion = (evento) => {
-      const { accion, contenidoId, autor } = evento.detail || {};
+      // Nunca aplicar moderación local sobre contenido propio.
+      if (esPropia) {
+        return;
+      }
+
+      const {
+        accion,
+        contenidoId,
+        autor,
+      } = evento.detail || {};
 
       if (
         contenidoId === idModeracion ||
-        (["silenciar", "bloquear"].includes(accion) &&
-          autor === publicacion.autor)
+        (
+          ["silenciar", "bloquear"].includes(accion) &&
+          autor === publicacion.autor
+        )
       ) {
         setOculto(true);
       }
@@ -222,15 +231,20 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
 
     window.addEventListener(
       "reportard_moderation_changed",
-      actualizarModeracion,
+      actualizarModeracion
     );
 
-    return () =>
+    return () => {
       window.removeEventListener(
         "reportard_moderation_changed",
-        actualizarModeracion,
+        actualizarModeracion
       );
-  }, [idModeracion, publicacion.autor]);
+    };
+  }, [
+    esPropia,
+    idModeracion,
+    publicacion.autor,
+  ]);
 
   const totalReacciones =
     publicacion.reacciones + (reaccionado ? 1 : 0);
@@ -390,10 +404,15 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
             abrirDetalle();
           }
         }}
-        className={`px-4 pb-4 ${
-          modoDetalle ? "" : "cursor-pointer"
-        }`}
+        className={`px-4 pb-4 ${modoDetalle ? "" : "cursor-pointer"
+          }`}
       >
+        {publicacion.titulo && (
+          <h3 className="mb-2 text-base font-semibold leading-6 text-white">
+            {publicacion.titulo}
+          </h3>
+        )}
+
         <p className="text-sm leading-6 text-slate-200">
           {publicacion.contenido}
         </p>
@@ -474,11 +493,10 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
           onClick={() =>
             setReaccionado((estadoActual) => !estadoActual)
           }
-          className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${
-            reaccionado
+          className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${reaccionado
               ? "bg-red-500/10 text-red-400"
               : "text-slate-400 hover:bg-white/5"
-          }`}
+            }`}
         >
           <Heart
             size={21}
@@ -494,11 +512,10 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
               (estadoActual) => !estadoActual,
             )
           }
-          className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${
-            mostrarComentarios
+          className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${mostrarComentarios
               ? "bg-blue-500/10 text-blue-400"
               : "text-slate-400 hover:bg-white/5"
-          }`}
+            }`}
         >
           <MessageCircle size={21} />
           Comentar
@@ -524,11 +541,10 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
           onClick={() =>
             setGuardado((estadoActual) => !estadoActual)
           }
-          className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${
-            guardado
+          className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${guardado
               ? "text-amber-400"
               : "text-slate-400 hover:bg-white/5"
-          }`}
+            }`}
         >
           <Bookmark
             size={21}
@@ -635,39 +651,39 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
 
                       {comentarioRespondiendo ===
                         comentario.id && (
-                        <div className="ml-5 mt-3 flex gap-2">
-                          <input
-                            type="text"
-                            autoFocus
-                            value={nuevaRespuesta}
-                            onChange={(evento) =>
-                              setNuevaRespuesta(
-                                evento.target.value,
-                              )
-                            }
-                            onKeyDown={(evento) => {
-                              if (evento.key === "Enter") {
-                                agregarRespuesta(
-                                  comentario.id,
-                                );
+                          <div className="ml-5 mt-3 flex gap-2">
+                            <input
+                              type="text"
+                              autoFocus
+                              value={nuevaRespuesta}
+                              onChange={(evento) =>
+                                setNuevaRespuesta(
+                                  evento.target.value,
+                                )
                               }
-                            }}
-                            placeholder={`Responder a ${comentario.autor}...`}
-                            className="min-w-0 flex-1 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none"
-                          />
+                              onKeyDown={(evento) => {
+                                if (evento.key === "Enter") {
+                                  agregarRespuesta(
+                                    comentario.id,
+                                  );
+                                }
+                              }}
+                              placeholder={`Responder a ${comentario.autor}...`}
+                              className="min-w-0 flex-1 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none"
+                            />
 
-                          <button
-                            type="button"
-                            onClick={() =>
-                              agregarRespuesta(comentario.id)
-                            }
-                            disabled={!nuevaRespuesta.trim()}
-                            className="rounded-full bg-blue-500 p-2 text-white disabled:opacity-40"
-                          >
-                            <Send size={14} />
-                          </button>
-                        </div>
-                      )}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                agregarRespuesta(comentario.id)
+                              }
+                              disabled={!nuevaRespuesta.trim()}
+                              className="rounded-full bg-blue-500 p-2 text-white disabled:opacity-40"
+                            >
+                              <Send size={14} />
+                            </button>
+                          </div>
+                        )}
                     </div>
                   </div>
                 </article>

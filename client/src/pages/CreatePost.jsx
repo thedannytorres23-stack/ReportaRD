@@ -1,336 +1,376 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
-  Globe2,
-  ImagePlus,
+  Image,
   LoaderCircle,
-  MapPin,
   Send,
   Video,
-  X,
 } from "lucide-react";
-import { useNavigate } from "react-router";
-import { crearPublicacion } from "../services/contentService";
+import { useNavigate, useSearchParams } from "react-router";
 
-const perfilInicial = {
-  nombre: "Ciudadano ReportaRD",
-  usuario: "ciudadano",
-  foto: "",
+import {
+  crearPublicacion,
+  editarPublicacion,
+  obtenerPublicacion,
+} from "../services/contentService";
+
+const obtenerToken = () => {
+  return localStorage.getItem("reportard_token") || "";
 };
 
-const obtenerSesion = () => {
+const obtenerUsuarioActual = () => {
   try {
-    const token = localStorage.getItem("reportard_token") || "";
-    const datosUsuario = localStorage.getItem("reportard_user");
-
-    return {
-      token,
-      usuario: datosUsuario
-        ? { ...perfilInicial, ...JSON.parse(datosUsuario) }
-        : perfilInicial,
-    };
+    return JSON.parse(
+      localStorage.getItem("reportard_user") || "{}"
+    );
   } catch {
-    return { token: "", usuario: perfilInicial };
+    return {};
   }
-};
-
-const obtenerIniciales = (nombre = "") => {
-  return nombre
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((palabra) => palabra.charAt(0).toUpperCase())
-    .join("") || "RD";
 };
 
 export default function CreatePost() {
   const navigate = useNavigate();
-  const inputArchivo = useRef(null);
-  const [sesion] = useState(obtenerSesion);
-  const [contenido, setContenido] = useState("");
-  const [archivo, setArchivo] = useState(null);
-  const [vistaPrevia, setVistaPrevia] = useState("");
-  const [error, setError] = useState("");
-  const [publicando, setPublicando] = useState(false);
-  const [publicacionCreada, setPublicacionCreada] = useState(false);
+  const [searchParams] = useSearchParams();
 
-  const { token, usuario } = sesion;
-  const iniciales = obtenerIniciales(usuario.nombre);
+  const publicacionId = searchParams.get("editar");
+  const modoEdicion = Boolean(publicacionId);
+
+  const token = useMemo(obtenerToken, []);
+  const usuarioActual = useMemo(obtenerUsuarioActual, []);
+
+  const [contenido, setContenido] = useState("");
+  const [titulo, setTitulo] = useState("");
+  const [comunidad, setComunidad] = useState("");
+
+  const [mediaUrl, setMediaUrl] = useState("");
+  const [mediaTipo, setMediaTipo] = useState("");
+
+  const [cargando, setCargando] = useState(false);
+  const [cargandoPublicacion, setCargandoPublicacion] =
+    useState(modoEdicion);
+
+  const [error, setError] = useState("");
+  const [mensaje, setMensaje] = useState("");
 
   useEffect(() => {
-    return () => {
-      if (vistaPrevia) URL.revokeObjectURL(vistaPrevia);
+    if (!modoEdicion) return undefined;
+
+    if (!token) {
+      navigate("/login", { replace: true });
+      return undefined;
+    }
+
+    let activo = true;
+
+    const cargarPublicacion = async () => {
+      try {
+        setCargandoPublicacion(true);
+        setError("");
+
+        const respuesta = await obtenerPublicacion(
+          token,
+          publicacionId
+        );
+
+        if (!activo) return;
+
+        const publicacion = respuesta.publicacion;
+
+        const miId = String(
+          usuarioActual._id || usuarioActual.id || ""
+        );
+
+        const autorId = String(
+          publicacion.autor?._id ||
+            publicacion.autor?.id ||
+            publicacion.autor ||
+            ""
+        );
+
+        if (!miId || miId !== autorId) {
+          setError(
+            "No tienes permiso para editar esta publicación."
+          );
+          return;
+        }
+
+        setTitulo(publicacion.titulo || "");
+        setContenido(publicacion.contenido || "");
+        setComunidad(publicacion.comunidad || "");
+        setMediaUrl(publicacion.mediaUrl || "");
+        setMediaTipo(publicacion.mediaTipo || "");
+      } catch (errorSolicitud) {
+        if (!activo) return;
+
+        setError(
+          errorSolicitud.message ||
+            "No se pudo cargar la publicación."
+        );
+      } finally {
+        if (activo) {
+          setCargandoPublicacion(false);
+        }
+      }
     };
-  }, [vistaPrevia]);
 
-  const abrirSelector = (tipo) => {
-    if (!inputArchivo.current || publicando) return;
+    cargarPublicacion();
 
-    inputArchivo.current.accept =
-      tipo === "imagen" ? "image/*" : "video/*";
-    inputArchivo.current.click();
-  };
+    return () => {
+      activo = false;
+    };
+  }, [
+    modoEdicion,
+    navigate,
+    publicacionId,
+    token,
+    usuarioActual,
+  ]);
 
-  const seleccionarArchivo = (event) => {
-    const archivoSeleccionado = event.target.files?.[0];
-    if (!archivoSeleccionado) return;
+  const publicar = async (evento) => {
+    evento.preventDefault();
 
-    const esImagen = archivoSeleccionado.type.startsWith("image/");
-    const esVideo = archivoSeleccionado.type.startsWith("video/");
+    const contenidoLimpio = contenido.trim();
 
-    if (!esImagen && !esVideo) {
-      setError("Selecciona una imagen o un video válido.");
-      return;
-    }
-
-    if (archivoSeleccionado.size > 25 * 1024 * 1024) {
-      setError("El archivo no puede superar los 25 MB.");
-      return;
-    }
-
-    if (vistaPrevia) URL.revokeObjectURL(vistaPrevia);
-
-    setArchivo(archivoSeleccionado);
-    setVistaPrevia(URL.createObjectURL(archivoSeleccionado));
-    setError("");
-  };
-
-  const eliminarArchivo = () => {
-    if (vistaPrevia) URL.revokeObjectURL(vistaPrevia);
-
-    setArchivo(null);
-    setVistaPrevia("");
-    if (inputArchivo.current) inputArchivo.current.value = "";
-  };
-
-  const publicar = async (event) => {
-    event.preventDefault();
-    const texto = contenido.trim();
-
-    if (!texto) {
-      setError("Escribe algo para compartir con tu comunidad.");
-      return;
-    }
-
-    if (archivo) {
-      setError(
-        "La publicación de fotos y videos necesita almacenamiento multimedia. Elimina el archivo y publica el texto por ahora.",
-      );
+    if (!contenidoLimpio) {
+      setError("Escribe algo para publicar.");
       return;
     }
 
     if (!token) {
-      setError("Tu sesión expiró. Inicia sesión nuevamente.");
+      setError(
+        "Tu sesión expiró. Inicia sesión nuevamente."
+      );
       return;
     }
 
     try {
-      setPublicando(true);
+      setCargando(true);
       setError("");
+      setMensaje("");
 
-      await crearPublicacion(token, {
-        contenido: texto,
-        comunidad: "Comunidad ReportaRD",
-        mediaUrl: "",
-        mediaTipo: "",
-      });
+      const datos = {
+        titulo: titulo.trim(),
+        contenido: contenidoLimpio,
+        comunidad: comunidad.trim(),
+        mediaUrl: mediaUrl.trim() || null,
+        mediaTipo: mediaTipo || null,
+      };
 
-      setPublicacionCreada(true);
+      if (modoEdicion) {
+        await editarPublicacion(
+          token,
+          publicacionId,
+          datos
+        );
+
+        setMensaje(
+          "Publicación actualizada correctamente."
+        );
+      } else {
+        await crearPublicacion(token, datos);
+
+        setMensaje(
+          "Publicación creada correctamente."
+        );
+      }
+
+      window.setTimeout(() => {
+        navigate("/", { replace: true });
+      }, 500);
     } catch (errorSolicitud) {
-      setError(errorSolicitud.message);
+      setError(
+        errorSolicitud.message ||
+          "No se pudo guardar la publicación."
+      );
     } finally {
-      setPublicando(false);
+      setCargando(false);
     }
   };
 
-  const terminarPublicacion = () => {
-    navigate("/", { replace: true });
-  };
+  if (cargandoPublicacion) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white">
+        <div className="mx-auto flex min-h-screen max-w-md items-center justify-center bg-[#06101f]">
+          <div className="flex flex-col items-center gap-3 text-slate-400">
+            <LoaderCircle
+              size={28}
+              className="animate-spin"
+            />
+
+            <p className="text-sm">
+              Cargando publicación...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-      <div className="mx-auto min-h-screen max-w-md border-x border-white/5 bg-[#06101f]">
-        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-white/10 bg-[#06101f]/95 px-4 py-4 backdrop-blur-xl">
-          <button
-            type="button"
-            onClick={() => navigate("/")}
-            aria-label="Volver al inicio"
-            className="rounded-xl p-2 text-slate-300 hover:bg-white/5"
-          >
-            <ArrowLeft size={23} />
-          </button>
-
-          <h1 className="font-bold">Crear publicación</h1>
-
-          <button
-            type="submit"
-            form="formulario-publicacion"
-            disabled={publicando}
-            className="rounded-xl bg-red-500 px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {publicando ? "Guardando…" : "Publicar"}
-          </button>
-        </header>
-
-        <form
-          id="formulario-publicacion"
-          onSubmit={publicar}
-          className="px-5 py-6"
-        >
-          <section className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-red-500 font-bold">
-              {usuario.foto ? (
-                <img
-                  src={usuario.foto}
-                  alt={`Foto de ${usuario.nombre}`}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                iniciales
-              )}
-            </div>
-
-            <div>
-              <h2 className="font-semibold">{usuario.nombre}</h2>
-              <span className="mt-1 flex w-fit items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">
-                <Globe2 size={13} />
-                Público
-              </span>
-            </div>
-          </section>
-
-          <textarea
-            value={contenido}
-            onChange={(event) => {
-              setContenido(event.target.value);
-              setError("");
-            }}
-            placeholder="¿Qué quieres compartir con tu comunidad?"
-            maxLength={1000}
-            disabled={publicando}
-            className="mt-6 min-h-40 w-full resize-none bg-transparent text-lg leading-7 text-white outline-none placeholder:text-slate-600 disabled:opacity-60"
-          />
-
-          <div className="text-right text-xs text-slate-600">
-            {contenido.length}/1000
-          </div>
-
-          {vistaPrevia && (
-            <section className="relative mt-5 overflow-hidden rounded-3xl border border-white/10 bg-slate-900">
-              <button
-                type="button"
-                onClick={eliminarArchivo}
-                aria-label="Eliminar archivo"
-                className="absolute right-3 top-3 z-10 rounded-full bg-black/70 p-2 text-white backdrop-blur"
-              >
-                <X size={19} />
-              </button>
-
-              {archivo?.type.startsWith("image/") ? (
-                <img
-                  src={vistaPrevia}
-                  alt="Vista previa de la publicación"
-                  className="max-h-96 w-full object-contain"
-                />
-              ) : (
-                <video src={vistaPrevia} controls className="max-h-96 w-full" />
-              )}
-
-              <div className="border-t border-white/10 px-4 py-3">
-                <p className="truncate text-sm text-slate-300">{archivo?.name}</p>
-                <p className="mt-1 text-xs text-amber-300">
-                  Vista previa local; todavía no se puede guardar este archivo.
-                </p>
-              </div>
-            </section>
-          )}
-
-          {error && (
-            <p className="mt-5 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm leading-5 text-red-300">
-              {error}
-            </p>
-          )}
-
-          <input
-            ref={inputArchivo}
-            type="file"
-            onChange={seleccionarArchivo}
-            className="hidden"
-          />
-
-          <section className="mt-7 rounded-3xl border border-white/10 bg-white/[0.035] p-4">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-medium">Agregar a tu publicación</p>
-              <span className="text-[10px] text-slate-500">Vista previa</span>
-            </div>
-
-            <div className="mt-4 grid grid-cols-3 gap-3">
-              <button
-                type="button"
-                onClick={() => abrirSelector("imagen")}
-                className="flex flex-col items-center gap-2 rounded-2xl bg-white/5 px-3 py-4 text-xs text-slate-300 transition active:scale-95"
-              >
-                <ImagePlus size={23} className="text-green-400" />
-                Imagen
-              </button>
-
-              <button
-                type="button"
-                onClick={() => abrirSelector("video")}
-                className="flex flex-col items-center gap-2 rounded-2xl bg-white/5 px-3 py-4 text-xs text-slate-300 transition active:scale-95"
-              >
-                <Video size={23} className="text-blue-400" />
-                Video
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setError("La ubicación se conectará junto con el mapa ciudadano.")}
-                className="flex flex-col items-center gap-2 rounded-2xl bg-white/5 px-3 py-4 text-xs text-slate-300"
-              >
-                <MapPin size={23} className="text-red-400" />
-                Ubicación
-              </button>
-            </div>
-          </section>
-
-          <button
-            type="submit"
-            disabled={publicando}
-            className="mt-7 flex w-full items-center justify-center gap-2 rounded-2xl bg-red-500 px-6 py-4 font-semibold shadow-lg shadow-red-500/20 transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {publicando ? (
-              <LoaderCircle size={20} className="animate-spin" />
-            ) : (
-              <Send size={20} />
-            )}
-            {publicando ? "Publicando…" : "Compartir publicación"}
-          </button>
-        </form>
-      </div>
-
-      {publicacionCreada && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center">
-          <div className="w-full max-w-sm rounded-3xl border border-emerald-400/15 bg-[#0b1626] p-6 text-center shadow-2xl">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
-              <Send size={25} />
-            </div>
-
-            <h2 className="mt-5 text-xl font-bold">Publicación guardada</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-400">
-              Ya está en MongoDB y aparecerá al principio del feed.
-            </p>
-
+      <div className="mx-auto min-h-screen max-w-md border-x border-white/5 bg-[#06101f] pb-24">
+        <header className="sticky top-0 z-20 border-b border-white/5 bg-[#06101f]/95 px-4 py-4 backdrop-blur-xl">
+          <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={terminarPublicacion}
-              className="mt-6 w-full rounded-2xl bg-red-500 px-5 py-3 font-semibold"
+              onClick={() => navigate(-1)}
+              aria-label="Volver"
+              className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/5 bg-white/[0.035] text-slate-300 transition hover:bg-white/[0.07]"
             >
-              Ver en el feed
+              <ArrowLeft size={20} />
             </button>
+
+            <div>
+              <h1 className="font-bold">
+                {modoEdicion
+                  ? "Editar publicación"
+                  : "Crear publicación"}
+              </h1>
+
+              <p className="mt-0.5 text-xs text-slate-500">
+                {modoEdicion
+                  ? "Actualiza el contenido de tu publicación"
+                  : "Comparte algo con tu comunidad"}
+              </p>
+            </div>
           </div>
-        </div>
-      )}
+        </header>
+
+        <main className="px-5 py-5">
+          <form
+            onSubmit={publicar}
+            className="space-y-5"
+          >
+            <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+              <label
+                htmlFor="titulo"
+                className="text-xs font-semibold uppercase tracking-wider text-slate-500"
+              >
+                Título opcional
+              </label>
+
+              <input
+                id="titulo"
+                type="text"
+                value={titulo}
+                onChange={(evento) =>
+                  setTitulo(evento.target.value)
+                }
+                placeholder="Ej. Jornada comunitaria"
+                className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-blue-500/40"
+              />
+
+              <label
+                htmlFor="contenido"
+                className="mt-5 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+              >
+                Publicación
+              </label>
+
+              <textarea
+                id="contenido"
+                value={contenido}
+                onChange={(evento) =>
+                  setContenido(evento.target.value)
+                }
+                placeholder="¿Qué quieres compartir?"
+                rows={8}
+                className="mt-2 w-full resize-none rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3 text-sm leading-6 text-white outline-none placeholder:text-slate-600 focus:border-blue-500/40"
+              />
+            </section>
+
+            <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+              <label
+                htmlFor="comunidad"
+                className="text-xs font-semibold uppercase tracking-wider text-slate-500"
+              >
+                Comunidad
+              </label>
+
+              <input
+                id="comunidad"
+                type="text"
+                value={comunidad}
+                onChange={(evento) =>
+                  setComunidad(evento.target.value)
+                }
+                placeholder="Ej. Comunidad ReportaRD"
+                className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-blue-500/40"
+              />
+            </section>
+
+            <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Multimedia
+              </p>
+
+              <p className="mt-2 text-xs leading-5 text-slate-600">
+                La subida real de imágenes y videos todavía
+                se conectará al almacenamiento en nube.
+              </p>
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  disabled
+                  className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-600 disabled:cursor-not-allowed"
+                >
+                  <Image size={18} />
+                  Imagen
+                </button>
+
+                <button
+                  type="button"
+                  disabled
+                  className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-600 disabled:cursor-not-allowed"
+                >
+                  <Video size={18} />
+                  Video
+                </button>
+              </div>
+            </section>
+
+            {error && (
+              <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                {error}
+              </div>
+            )}
+
+            {mensaje && (
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+                {mensaje}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={cargando}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 px-5 py-4 font-bold text-white transition hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {cargando ? (
+                <>
+                  <LoaderCircle
+                    size={19}
+                    className="animate-spin"
+                  />
+
+                  {modoEdicion
+                    ? "Guardando..."
+                    : "Publicando..."}
+                </>
+              ) : (
+                <>
+                  <Send size={18} />
+
+                  {modoEdicion
+                    ? "Guardar cambios"
+                    : "Publicar"}
+                </>
+              )}
+            </button>
+          </form>
+        </main>
+      </div>
     </div>
   );
 }

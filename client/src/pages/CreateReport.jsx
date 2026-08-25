@@ -19,8 +19,22 @@ import {
   Trash2,
   Truck,
   X,
+  Map,
+
+
 } from "lucide-react";
+
 import { useNavigate } from "react-router";
+import { crearReporte } from "../services/contentService";
+import {
+  MapContainer,
+  Marker,
+  TileLayer,
+  useMapEvents,
+} from "react-leaflet";
+
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 const categorias = [
   {
@@ -80,8 +94,49 @@ const titulosPasos = [
   "Agrega evidencias",
 ];
 
+
+const iconoSeleccion = L.divIcon({
+  className: "",
+  html: `
+    <div style="
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #ef4444;
+      border: 4px solid white;
+      box-shadow: 0 6px 18px rgba(0,0,0,.35);
+    "></div>
+  `,
+  iconSize: [34, 34],
+  iconAnchor: [17, 17],
+});
+
+function SelectorPunto({ posicion, onSeleccionar }) {
+  useMapEvents({
+    click(evento) {
+      onSeleccionar({
+        latitud: evento.latlng.lat,
+        longitud: evento.latlng.lng,
+      });
+    },
+  });
+
+  if (!posicion) return null;
+
+  return (
+    <Marker
+      position={[
+        posicion.latitud,
+        posicion.longitud,
+      ]}
+      icon={iconoSeleccion}
+    />
+  );
+}
+
 export default function CreateReport() {
   const navigate = useNavigate();
+  const [mostrarMapa, setMostrarMapa] = useState(false);
   const inputArchivos = useRef(null);
   const archivosActuales = useRef([]);
 
@@ -90,6 +145,10 @@ export default function CreateReport() {
   const [titulo, setTitulo] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [ubicacion, setUbicacion] = useState("");
+  const [coordenadas, setCoordenadas] = useState({
+    latitud: null,
+    longitud: null,
+  });
   const [referencia, setReferencia] = useState("");
   const [archivos, setArchivos] = useState([]);
   const [aceptaResponsabilidad, setAceptaResponsabilidad] =
@@ -162,14 +221,79 @@ export default function CreateReport() {
       return;
     }
 
+    <button
+      type="button"
+      onClick={() =>
+        setMostrarMapa((estado) => !estado)
+      }
+      className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/[0.06]"
+    >
+      <Map size={18} />
+
+      {mostrarMapa
+        ? "Cerrar mapa"
+        : "Seleccionar en el mapa"}
+    </button>
+
+
+    {
+      mostrarMapa && (
+        <div className="mt-4 overflow-hidden rounded-2xl border border-white/10">
+          <div className="h-72">
+            <MapContainer
+              center={[19.4517, -70.697]}
+              zoom={13}
+              scrollWheelZoom
+              className="h-full w-full"
+            >
+              <TileLayer
+                attribution='&copy; OpenStreetMap'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+
+              <SelectorPunto
+                posicion={
+                  coordenadas.latitud !== null &&
+                    coordenadas.longitud !== null
+                    ? coordenadas
+                    : null
+                }
+                onSeleccionar={(nuevasCoordenadas) => {
+                  setCoordenadas(nuevasCoordenadas);
+
+                  setUbicacion(
+                    `Punto seleccionado (${nuevasCoordenadas.latitud.toFixed(
+                      5,
+                    )}, ${nuevasCoordenadas.longitud.toFixed(
+                      5,
+                    )})`,
+                  );
+                }}
+              />
+            </MapContainer>
+          </div>
+
+          <div className="bg-[#0b1626] px-4 py-3 text-xs text-slate-500">
+            Toca el lugar exacto donde ocurre el problema.
+          </div>
+        </div>
+      )
+    }
+
     setBuscandoUbicacion(true);
     setError("");
 
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
+        setCoordenadas({
+          latitud: coords.latitude,
+          longitud: coords.longitude,
+        });
+
         setUbicacion(
           `Ubicación actual (${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)})`,
         );
+
         setBuscandoUbicacion(false);
       },
       () => {
@@ -223,51 +347,58 @@ export default function CreateReport() {
     });
   };
 
-  const publicarReporte = () => {
+  const publicarReporte = async () => {
     if (!aceptaResponsabilidad) {
-      setError("Confirma que la información del reporte es verdadera.");
+      setError(
+        "Confirma que la información del reporte es verdadera.",
+      );
       return;
     }
 
-    setError("");
-    setEnviando(true);
+    const token =
+      localStorage.getItem("reportard_token") || "";
 
-    const nuevoReporte = {
-      id: `report-${Date.now()}`,
-      categoria,
-      titulo: titulo.trim(),
-      descripcion: descripcion.trim(),
-      ubicacion: ubicacion.trim(),
-      referencia: referencia.trim(),
-      estado: "Pendiente",
-      creadoEn: new Date().toISOString(),
-      evidencias: archivos.map(({ archivo, esVideo }) => ({
-        nombre: archivo.name,
-        tipo: esVideo ? "video" : "imagen",
-        tamano: archivo.size,
-      })),
-    };
-
-    try {
-      const guardados = JSON.parse(
-        localStorage.getItem("reportard_user_reports") || "[]",
+    if (!token) {
+      setError(
+        "Tu sesión expiró. Inicia sesión nuevamente.",
       );
-
-      localStorage.setItem(
-        "reportard_user_reports",
-        JSON.stringify([nuevoReporte, ...guardados]),
-      );
-    } catch {
-      localStorage.setItem(
-        "reportard_user_reports",
-        JSON.stringify([nuevoReporte]),
-      );
+      return;
     }
 
-    window.setTimeout(() => {
-      setEnviando(false);
+    try {
+      setError("");
+      setEnviando(true);
+
+      const datosReporte = {
+        categoria,
+        titulo: titulo.trim(),
+        descripcion: descripcion.trim(),
+        ubicacion: referencia.trim()
+          ? `${ubicacion.trim()} · Referencia: ${referencia.trim()}`
+          : ubicacion.trim(),
+
+        coordenadas: {
+          latitud: coordenadas.latitud,
+          longitud: coordenadas.longitud,
+        },
+
+        // La evidencia se conectará cuando tengamos
+        // almacenamiento real en la nube.
+        mediaUrl: "",
+        mediaTipo: "",
+      };
+
+      await crearReporte(token, datosReporte);
+
       setReporteCreado(true);
-    }, 700);
+    } catch (errorSolicitud) {
+      setError(
+        errorSolicitud.message ||
+        "No se pudo crear el reporte.",
+      );
+    } finally {
+      setEnviando(false);
+    }
   };
 
   if (reporteCreado) {
@@ -288,8 +419,8 @@ export default function CreateReport() {
           </h1>
 
           <p className="mt-4 max-w-sm text-sm leading-6 text-slate-400">
-            El reporte fue registrado como pendiente. Cuando conectemos el
-            backend, también podrá enviarse a las autoridades correspondientes.
+            El reporte fue registrado correctamente y quedó disponible
+            para la comunidad.
           </p>
 
           <button
@@ -332,9 +463,8 @@ export default function CreateReport() {
             {[1, 2, 3, 4].map((numero) => (
               <span
                 key={numero}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  numero <= paso ? "bg-red-500" : "bg-white/10"
-                }`}
+                className={`h-1.5 rounded-full transition-all duration-300 ${numero <= paso ? "bg-red-500" : "bg-white/10"
+                  }`}
               />
             ))}
           </div>
@@ -363,11 +493,10 @@ export default function CreateReport() {
                           setCategoria(nombre);
                           setError("");
                         }}
-                        className={`relative rounded-2xl border p-4 text-left transition duration-200 active:scale-[0.97] ${
-                          seleccionada
-                            ? "border-red-500/70 bg-red-500/[0.08] shadow-lg shadow-red-950/20"
-                            : "border-white/10 bg-white/[0.03] hover:border-white/20"
-                        }`}
+                        className={`relative rounded-2xl border p-4 text-left transition duration-200 active:scale-[0.97] ${seleccionada
+                          ? "border-red-500/70 bg-red-500/[0.08] shadow-lg shadow-red-950/20"
+                          : "border-white/10 bg-white/[0.03] hover:border-white/20"
+                          }`}
                       >
                         {seleccionada && (
                           <span className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white">
@@ -460,6 +589,58 @@ export default function CreateReport() {
                   ? "Buscando ubicación..."
                   : "Usar mi ubicación actual"}
               </button>
+
+              <button
+                type="button"
+                onClick={() => setMostrarMapa((actual) => !actual)}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3.5 text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06]"
+              >
+                <Map size={18} />
+
+                {mostrarMapa
+                  ? "Cerrar mapa"
+                  : "Seleccionar ubicación en el mapa"}
+              </button>
+
+              {mostrarMapa && (
+                <div className="mt-4 overflow-hidden rounded-2xl border border-white/10">
+                  <div className="h-72">
+                    <MapContainer
+                      center={[19.4517, -70.697]}
+                      zoom={13}
+                      scrollWheelZoom
+                      className="h-full w-full"
+                    >
+                      <TileLayer
+                        attribution="&copy; OpenStreetMap"
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      />
+
+                      <SelectorPunto
+                        posicion={
+                          coordenadas.latitud !== null &&
+                            coordenadas.longitud !== null
+                            ? coordenadas
+                            : null
+                        }
+                        onSeleccionar={(nuevasCoordenadas) => {
+                          setCoordenadas(nuevasCoordenadas);
+
+                          setUbicacion(
+                            `Punto seleccionado (${nuevasCoordenadas.latitud.toFixed(
+                              5,
+                            )}, ${nuevasCoordenadas.longitud.toFixed(5)})`
+                          );
+                        }}
+                      />
+                    </MapContainer>
+                  </div>
+
+                  <div className="bg-[#0b1626] px-4 py-3 text-center text-xs text-slate-500">
+                    Haz clic en el punto exacto donde ocurre el problema.
+                  </div>
+                </div>
+              )}
 
               <div className="my-5 flex items-center gap-3 text-xs text-slate-600">
                 <span className="h-px flex-1 bg-white/10" />
