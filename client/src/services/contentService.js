@@ -190,3 +190,17 @@ export const eliminarReporte = (
     },
   );
 };
+
+
+export const confirmarReporte = (
+  token,
+  reporteId,
+) => {
+  return solicitar(
+    `/reports/${reporteId}/confirmar`,
+    token,
+    {
+      method: "POST",
+    },
+  );
+};

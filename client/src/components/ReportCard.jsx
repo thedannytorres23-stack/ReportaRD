@@ -10,7 +10,10 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import ContentOptions from "./ContentOptions";
-import { eliminarReporte } from "../services/contentService";
+import {
+  confirmarReporte,
+  eliminarReporte,
+} from "../services/contentService";
 
 export default function ReportCard({ reporte, modoDetalle = false }) {
   const navigate = useNavigate();
@@ -48,55 +51,70 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
   });
 
   const eliminarContenido = async () => {
-  if (!reporte.id) {
-    throw new Error(
-      "No se encontró el identificador del reporte.",
+    if (!reporte.id) {
+      throw new Error(
+        "No se encontró el identificador del reporte.",
+      );
+    }
+
+    const token =
+      localStorage.getItem("reportard_token") || "";
+
+    if (!token) {
+      throw new Error(
+        "Tu sesión expiró. Inicia sesión nuevamente.",
+      );
+    }
+
+    await eliminarReporte(token, reporte.id);
+
+    setOculto(true);
+
+    window.dispatchEvent(
+      new CustomEvent("reportard_report_deleted", {
+        detail: {
+          reporteId: reporte.id,
+        },
+      }),
     );
-  }
-
-  const token =
-    localStorage.getItem("reportard_token") || "";
-
-  if (!token) {
-    throw new Error(
-      "Tu sesión expiró. Inicia sesión nuevamente.",
-    );
-  }
-
-  await eliminarReporte(token, reporte.id);
-
-  setOculto(true);
-
-  window.dispatchEvent(
-    new CustomEvent("reportard_report_deleted", {
-      detail: {
-        reporteId: reporte.id,
-      },
-    }),
-  );
-};
+  };
 
   const esPropio = (() => {
-    try {
-      const perfil = JSON.parse(
-        localStorage.getItem("reportard_profile") || "{}",
-      );
+  try {
+    const usuarioActual = JSON.parse(
+      localStorage.getItem("reportard_user") || "{}",
+    );
 
-      return (
-        reporte.esPropio === true ||
-        reporte.autor === perfil.nombre ||
-        reporte.autor === "Danny Torres"
-      );
-    } catch {
-      return reporte.esPropio === true;
-    }
-  })();
+    const miId = String(
+      usuarioActual._id ||
+      usuarioActual.id ||
+      "",
+    );
+
+    const autorId = String(
+      reporte.autorId || "",
+    );
+
+    return Boolean(
+      miId &&
+      autorId &&
+      miId === autorId
+    );
+  } catch {
+    return false;
+  }
+})();
 
   const abrirPerfil = () => {
-    if (reporte.autorId) {
-      navigate(`/usuario/${reporte.autorId}`);
-    }
-  };
+  if (esPropio) {
+    navigate("/perfil");
+    return;
+  }
+
+  if (reporte.autorId) {
+    navigate(`/usuario/${reporte.autorId}`);
+  }
+};
 
   const abrirDetalle = () => {
     if (modoDetalle) return;
@@ -135,6 +153,14 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
   const [confirmado, setConfirmado] = useState(
     estadoGuardado.confirmado ?? false,
   );
+
+  const [totalConfirmaciones, setTotalConfirmaciones] =
+    useState(reporte.confirmaciones ?? 0);
+
+  const [confirmando, setConfirmando] =
+    useState(false);
+
+
 
   const [guardado, setGuardado] = useState(
     estadoGuardado.guardado ?? false,
@@ -204,12 +230,50 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
       );
   }, [idModeracion, reporte.autor]);
 
-  const cambiarConfirmacion = () => {
-    setConfirmado((estadoActual) => !estadoActual);
-  };
+  const cambiarConfirmacion = async () => {
+    if (esPropio || confirmando) {
+      return;
+    }
 
-  const totalConfirmaciones =
-    reporte.confirmaciones + (confirmado ? 1 : 0);
+    const token =
+      localStorage.getItem("reportard_token") || "";
+
+    if (!token) {
+      alert(
+        "Tu sesión expiró. Inicia sesión nuevamente."
+      );
+      return;
+    }
+
+    if (!reporte.id) {
+      alert(
+        "No se encontró el identificador del reporte."
+      );
+      return;
+    }
+
+    try {
+      setConfirmando(true);
+
+      const respuesta = await confirmarReporte(
+        token,
+        reporte.id
+      );
+
+      setConfirmado(respuesta.confirmado);
+
+      setTotalConfirmaciones(
+        respuesta.confirmaciones
+      );
+    } catch (error) {
+      alert(
+        error.message ||
+        "No se pudo actualizar la confirmación."
+      );
+    } finally {
+      setConfirmando(false);
+    }
+  };
 
   const comentariosLocales = comentarios.reduce(
     (total, comentario) =>
@@ -428,11 +492,7 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
       )}
 
       <div className="flex items-center justify-between px-4 py-4 text-xs text-slate-400">
-        <button
-          type="button"
-          onClick={cambiarConfirmacion}
-          className="flex items-center gap-2"
-        >
+        <div className="flex items-center gap-2">
           <span className="flex -space-x-1">
             <span className="h-5 w-5 rounded-full border-2 border-[#0b1626] bg-red-500" />
             <span className="h-5 w-5 rounded-full border-2 border-[#0b1626] bg-blue-500" />
@@ -442,7 +502,7 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
           <span>
             {totalConfirmaciones} confirmaciones
           </span>
-        </button>
+        </div>
 
         <div className="flex gap-3">
           <button
@@ -463,20 +523,34 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
       <div className="h-px bg-white/10" />
 
       <footer className="grid grid-cols-4 px-2 py-2">
-        <button
-          type="button"
-          onClick={cambiarConfirmacion}
-          className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${confirmado
-            ? "bg-red-500/10 text-red-400"
-            : "text-slate-400 hover:bg-white/5"
-            }`}
-        >
-          <CheckCircle2
-            size={21}
-            fill={confirmado ? "currentColor" : "none"}
-          />
-          Confirmar
-        </button>
+        {!esPropio ? (
+          <button
+            type="button"
+            onClick={cambiarConfirmacion}
+            disabled={confirmando}
+            className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${
+              confirmado
+                ? "bg-red-500/10 text-red-400"
+                : "text-slate-400 hover:bg-white/5"
+            } ${confirmando ? "cursor-wait opacity-70" : ""}`}
+          >
+            <CheckCircle2
+              size={21}
+              fill={confirmado ? "currentColor" : "none"}
+            />
+
+            {confirmando
+              ? "Actualizando..."
+              : confirmado
+                ? "Confirmado"
+                : "Confirmar"}
+          </button>
+        ) : (
+          <div className="flex flex-col items-center gap-1 rounded-xl py-2 text-xs text-slate-600">
+            <CheckCircle2 size={21} />
+            Tu reporte
+          </div>
+        )}
 
         <button
           type="button"
