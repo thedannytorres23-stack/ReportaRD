@@ -1,5 +1,6 @@
 const API_URL = (
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api"
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:5000/api"
 ).replace(/\/$/, "");
 
 const procesarRespuesta = async (respuesta) => {
@@ -8,21 +9,29 @@ const procesarRespuesta = async (respuesta) => {
   try {
     datos = await respuesta.json();
   } catch (error) {
-    throw new Error("El servidor devolvió una respuesta inválida.", {
-      cause: error,
-    });
+    throw new Error(
+      "El servidor devolvió una respuesta inválida.",
+      {
+        cause: error,
+      },
+    );
   }
 
   if (!respuesta.ok) {
     throw new Error(
-      datos.mensaje || "No se pudo completar la solicitud."
+      datos.mensaje ||
+        "No se pudo completar la solicitud.",
     );
   }
 
   return datos;
 };
 
-const solicitar = async (ruta, token, opciones = {}) => {
+const solicitar = async (
+  ruta,
+  token,
+  opciones = {},
+) => {
   let respuesta;
 
   try {
@@ -35,9 +44,12 @@ const solicitar = async (ruta, token, opciones = {}) => {
       },
     });
   } catch (error) {
-    throw new Error("No se pudo conectar con ReportaRD Backend.", {
-      cause: error,
-    });
+    throw new Error(
+      "No se pudo conectar con ReportaRD Backend.",
+      {
+        cause: error,
+      },
+    );
   }
 
   return procesarRespuesta(respuesta);
@@ -55,29 +67,62 @@ const crearConsulta = (busqueda = "") => {
   return consulta ? `?${consulta}` : "";
 };
 
+export const subirArchivo = async (
+  token,
+  archivo,
+) => {
+  const formulario = new FormData();
+
+  formulario.append("archivo", archivo);
+
+  let respuesta;
+
+  try {
+    respuesta = await fetch(
+      `${API_URL}/uploads`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formulario,
+      },
+    );
+  } catch (error) {
+    throw new Error(
+      "No se pudo subir el archivo.",
+      {
+        cause: error,
+      },
+    );
+  }
+
+  return procesarRespuesta(respuesta);
+};
+
 export const listarPublicaciones = (
   token,
-  busqueda = ""
+  busqueda = "",
 ) => {
   return solicitar(
     `/posts${crearConsulta(busqueda)}`,
-    token
+    token,
   );
 };
 
 export const obtenerPublicacion = (
   token,
-  publicacionId
+  publicacionId,
 ) => {
   return solicitar(
     `/posts/${publicacionId}`,
-    token
+    token,
   );
 };
 
 export const crearPublicacion = (
   token,
-  datos
+  datos,
 ) => {
   return solicitar("/posts", token, {
     method: "POST",
@@ -88,7 +133,7 @@ export const crearPublicacion = (
 export const editarPublicacion = (
   token,
   publicacionId,
-  datos
+  datos,
 ) => {
   return solicitar(
     `/posts/${publicacionId}`,
@@ -96,36 +141,36 @@ export const editarPublicacion = (
     {
       method: "PUT",
       body: JSON.stringify(datos),
-    }
+    },
   );
 };
 
 export const eliminarPublicacion = (
   token,
-  publicacionId
+  publicacionId,
 ) => {
   return solicitar(
     `/posts/${publicacionId}`,
     token,
     {
       method: "DELETE",
-    }
+    },
   );
 };
 
 export const listarReportes = (
   token,
-  busqueda = ""
+  busqueda = "",
 ) => {
   return solicitar(
     `/reports${crearConsulta(busqueda)}`,
-    token
+    token,
   );
 };
 
 export const crearReporte = (
   token,
-  datos
+  datos,
 ) => {
   return solicitar("/reports", token, {
     method: "POST",
@@ -142,6 +187,6 @@ export const eliminarReporte = (
     token,
     {
       method: "DELETE",
-    }
+    },
   );
 };

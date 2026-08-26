@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   Image,
   LoaderCircle,
   Send,
   Video,
+  X,
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router";
 
@@ -12,6 +13,7 @@ import {
   crearPublicacion,
   editarPublicacion,
   obtenerPublicacion,
+  subirArchivo,
 } from "../services/contentService";
 
 const obtenerToken = () => {
@@ -44,6 +46,14 @@ export default function CreatePost() {
 
   const [mediaUrl, setMediaUrl] = useState("");
   const [mediaTipo, setMediaTipo] = useState("");
+
+  const [archivoSeleccionado, setArchivoSeleccionado] =
+    useState(null);
+
+  const [vistaPrevia, setVistaPrevia] = useState("");
+
+  const inputImagenRef = useRef(null);
+  const inputVideoRef = useRef(null);
 
   const [cargando, setCargando] = useState(false);
   const [cargandoPublicacion, setCargandoPublicacion] =
@@ -99,6 +109,7 @@ export default function CreatePost() {
         setComunidad(publicacion.comunidad || "");
         setMediaUrl(publicacion.mediaUrl || "");
         setMediaTipo(publicacion.mediaTipo || "");
+        setVistaPrevia(publicacion.mediaUrl || "");
       } catch (errorSolicitud) {
         if (!activo) return;
 
@@ -126,6 +137,86 @@ export default function CreatePost() {
     usuarioActual,
   ]);
 
+  useEffect(() => {
+    return () => {
+      if (
+        vistaPrevia &&
+        vistaPrevia.startsWith("blob:")
+      ) {
+        URL.revokeObjectURL(vistaPrevia);
+      }
+    };
+  }, [vistaPrevia]);
+
+  const seleccionarArchivo = (evento) => {
+    const archivo = evento.target.files?.[0];
+
+    if (!archivo) return;
+
+    const tiposPermitidos = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "video/mp4",
+      "video/webm",
+      "video/quicktime",
+    ];
+
+    if (!tiposPermitidos.includes(archivo.type)) {
+      setError(
+        "Formato no permitido. Usa JPG, PNG, WEBP, MP4, WEBM o MOV."
+      );
+      evento.target.value = "";
+      return;
+    }
+
+    if (archivo.size > 25 * 1024 * 1024) {
+      setError(
+        "El archivo supera el límite de 25 MB."
+      );
+      evento.target.value = "";
+      return;
+    }
+
+    if (
+      vistaPrevia &&
+      vistaPrevia.startsWith("blob:")
+    ) {
+      URL.revokeObjectURL(vistaPrevia);
+    }
+
+    setArchivoSeleccionado(archivo);
+    setVistaPrevia(URL.createObjectURL(archivo));
+    setMediaTipo(
+      archivo.type.startsWith("video/")
+        ? "video"
+        : "imagen"
+    );
+    setError("");
+  };
+
+  const quitarMultimedia = () => {
+    if (
+      vistaPrevia &&
+      vistaPrevia.startsWith("blob:")
+    ) {
+      URL.revokeObjectURL(vistaPrevia);
+    }
+
+    setArchivoSeleccionado(null);
+    setVistaPrevia("");
+    setMediaUrl("");
+    setMediaTipo("");
+
+    if (inputImagenRef.current) {
+      inputImagenRef.current.value = "";
+    }
+
+    if (inputVideoRef.current) {
+      inputVideoRef.current.value = "";
+    }
+  };
+
   const publicar = async (evento) => {
     evento.preventDefault();
 
@@ -148,12 +239,28 @@ export default function CreatePost() {
       setError("");
       setMensaje("");
 
+      let mediaUrlFinal = mediaUrl;
+      let mediaTipoFinal = mediaTipo;
+
+      if (archivoSeleccionado) {
+        const respuestaSubida = await subirArchivo(
+          token,
+          archivoSeleccionado
+        );
+
+        mediaUrlFinal =
+          respuestaSubida.archivo?.url || "";
+
+        mediaTipoFinal =
+          respuestaSubida.archivo?.tipo || "";
+      }
+
       const datos = {
         titulo: titulo.trim(),
         contenido: contenidoLimpio,
         comunidad: comunidad.trim(),
-        mediaUrl: mediaUrl.trim() || null,
-        mediaTipo: mediaTipo || null,
+        mediaUrl: mediaUrlFinal || null,
+        mediaTipo: mediaTipoFinal || null,
       };
 
       if (modoEdicion) {
@@ -304,16 +411,34 @@ export default function CreatePost() {
                 Multimedia
               </p>
 
-              <p className="mt-2 text-xs leading-5 text-slate-600">
-                La subida real de imágenes y videos todavía
-                se conectará al almacenamiento en nube.
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                Agrega una foto o video. El archivo se subirá de forma segura al publicar.
               </p>
+
+              <input
+                ref={inputImagenRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={seleccionarArchivo}
+                className="hidden"
+              />
+
+              <input
+                ref={inputVideoRef}
+                type="file"
+                accept="video/mp4,video/webm,video/quicktime"
+                onChange={seleccionarArchivo}
+                className="hidden"
+              />
 
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <button
                   type="button"
-                  disabled
-                  className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-600 disabled:cursor-not-allowed"
+                  onClick={() =>
+                    inputImagenRef.current?.click()
+                  }
+                  disabled={cargando}
+                  className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-slate-300 transition hover:bg-white/[0.08] disabled:opacity-50"
                 >
                   <Image size={18} />
                   Imagen
@@ -321,13 +446,50 @@ export default function CreatePost() {
 
                 <button
                   type="button"
-                  disabled
-                  className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-600 disabled:cursor-not-allowed"
+                  onClick={() =>
+                    inputVideoRef.current?.click()
+                  }
+                  disabled={cargando}
+                  className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-slate-300 transition hover:bg-white/[0.08] disabled:opacity-50"
                 >
                   <Video size={18} />
                   Video
                 </button>
               </div>
+
+              {vistaPrevia && (
+                <div className="relative mt-4 overflow-hidden rounded-2xl border border-white/10 bg-black/20">
+                  <button
+                    type="button"
+                    onClick={quitarMultimedia}
+                    aria-label="Quitar archivo"
+                    className="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/70 text-white transition hover:bg-black"
+                  >
+                    <X size={17} />
+                  </button>
+
+                  {mediaTipo === "video" ? (
+                    <video
+                      src={vistaPrevia}
+                      controls
+                      className="max-h-[420px] w-full bg-black object-contain"
+                    />
+                  ) : (
+                    <img
+                      src={vistaPrevia}
+                      alt="Vista previa"
+                      className="max-h-[420px] w-full object-cover"
+                    />
+                  )}
+
+                  {archivoSeleccionado && (
+                    <div className="border-t border-white/10 px-3 py-2 text-[11px] text-slate-500">
+                      {archivoSeleccionado.name} ·{" "}
+                      {(archivoSeleccionado.size / 1024 / 1024).toFixed(2)} MB
+                    </div>
+                  )}
+                </div>
+              )}
             </section>
 
             {error && (
@@ -354,9 +516,11 @@ export default function CreatePost() {
                     className="animate-spin"
                   />
 
-                  {modoEdicion
-                    ? "Guardando..."
-                    : "Publicando..."}
+                  {archivoSeleccionado
+                    ? "Subiendo archivo..."
+                    : modoEdicion
+                      ? "Guardando..."
+                      : "Publicando..."}
                 </>
               ) : (
                 <>
