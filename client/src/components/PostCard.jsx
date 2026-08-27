@@ -83,15 +83,15 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
   };
 
   const abrirPerfil = () => {
-  if (esPropio) {
-    navigate("/perfil");
-    return;
-  }
+    if (esPropia) {
+      navigate("/perfil");
+      return;
+    }
 
-  if (publicacion.autorId) {
-    navigate(`/usuario/${publicacion.autorId}`);
-  }
-};
+    if (publicacion.autorId) {
+      navigate(`/usuario/${publicacion.autorId}`);
+    }
+  };
 
   const abrirDetalle = () => {
     if (modoDetalle) return;
