@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+
 import {
   Bookmark,
   CheckCircle2,
@@ -8,15 +9,72 @@ import {
   Send,
   Share2,
 } from "lucide-react";
+
+
 import { useNavigate } from "react-router";
 import ContentOptions from "./ContentOptions";
+
 import {
   confirmarReporte,
   eliminarReporte,
 } from "../services/contentService";
 
+import {
+  crearComentario,
+  listarComentarios,
+} from "../services/commentService";
+
+import {
+  obtenerReacciones,
+  reaccionarContenido,
+} from "../services/reactionService";
+
+
+const REACCIONES_REPORTE = [
+  {
+    id: "me_preocupa",
+    emoji: "😟",
+    nombre: "Me preocupa",
+  },
+  {
+    id: "tengo_solucion",
+    emoji: "💡",
+    nombre: "Tengo solución",
+  },
+  {
+    id: "puedo_ayudar",
+    emoji: "🛠️",
+    nombre: "Puedo ayudar",
+  },
+  {
+    id: "difundir",
+    emoji: "📢",
+    nombre: "Difundir",
+  },
+  {
+    id: "autoridad",
+    emoji: "🏛️",
+    nombre: "Autoridad",
+  },
+  {
+    id: "apoyo_ciudadano",
+    emoji: "🛡️",
+    nombre: "Apoyo ciudadano",
+  },
+];
+
 export default function ReportCard({ reporte, modoDetalle = false }) {
   const navigate = useNavigate();
+
+  const usuarioActual = (() => {
+    try {
+      return JSON.parse(
+        localStorage.getItem("reportard_user") || "{}",
+      );
+    } catch {
+      return {};
+    }
+  })();
 
   const idModeracion = `report-${reporte.id ?? `${reporte.autor}-${reporte.tiempo}`
     }`;
@@ -80,41 +138,41 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
   };
 
   const esPropio = (() => {
-  try {
-    const usuarioActual = JSON.parse(
-      localStorage.getItem("reportard_user") || "{}",
-    );
+    try {
+      const usuarioActual = JSON.parse(
+        localStorage.getItem("reportard_user") || "{}",
+      );
 
-    const miId = String(
-      usuarioActual._id ||
-      usuarioActual.id ||
-      "",
-    );
+      const miId = String(
+        usuarioActual._id ||
+        usuarioActual.id ||
+        "",
+      );
 
-    const autorId = String(
-      reporte.autorId || "",
-    );
+      const autorId = String(
+        reporte.autorId || "",
+      );
 
-    return Boolean(
-      miId &&
-      autorId &&
-      miId === autorId
-    );
-  } catch {
-    return false;
-  }
-})();
+      return Boolean(
+        miId &&
+        autorId &&
+        miId === autorId
+      );
+    } catch {
+      return false;
+    }
+  })();
 
   const abrirPerfil = () => {
-  if (esPropio) {
-    navigate("/perfil");
-    return;
-  }
+    if (esPropio) {
+      navigate("/perfil");
+      return;
+    }
 
-  if (reporte.autorId) {
-    navigate(`/usuario/${reporte.autorId}`);
-  }
-};
+    if (reporte.autorId) {
+      navigate(`/usuario/${reporte.autorId}`);
+    }
+  };
 
   const abrirDetalle = () => {
     if (modoDetalle) return;
@@ -166,9 +224,22 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
     estadoGuardado.guardado ?? false,
   );
 
-  const [comentarios, setComentarios] = useState(
-    estadoGuardado.comentarios ?? [],
-  );
+  const [comentarios, setComentarios] = useState([]);
+
+  const [comentariosCargados, setComentariosCargados] =
+    useState(false);
+
+  const [cargandoComentarios, setCargandoComentarios] =
+    useState(false);
+
+  const [enviandoComentario, setEnviandoComentario] =
+    useState(false);
+
+  const [enviandoRespuesta, setEnviandoRespuesta] =
+    useState(false);
+
+  const [errorComentarios, setErrorComentarios] =
+    useState("");
 
   const [compartidosLocales, setCompartidosLocales] =
     useState(estadoGuardado.compartidosLocales ?? 0);
@@ -187,13 +258,33 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
   const [mensajeCompartido, setMensajeCompartido] =
     useState("");
 
+  const [mostrarReacciones, setMostrarReacciones] =
+    useState(false);
+
+  const [totalReacciones, setTotalReacciones] =
+    useState(reporte.reacciones ?? 0);
+
+  const [resumenReacciones, setResumenReacciones] =
+    useState({});
+
+  const [miReaccion, setMiReaccion] =
+    useState(null);
+
+  const [cargandoReacciones, setCargandoReacciones] =
+    useState(false);
+
+  const [reaccionando, setReaccionando] =
+    useState(false);
+
+  const [errorReacciones, setErrorReacciones] =
+    useState("");
+
   useEffect(() => {
     localStorage.setItem(
       claveReporte,
       JSON.stringify({
         confirmado,
         guardado,
-        comentarios,
         compartidosLocales,
       }),
     );
@@ -201,7 +292,6 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
     claveReporte,
     confirmado,
     guardado,
-    comentarios,
     compartidosLocales,
   ]);
 
@@ -229,6 +319,85 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
         actualizarModeracion,
       );
   }, [idModeracion, reporte.autor]);
+
+
+  useEffect(() => {
+    const cargarReacciones = async () => {
+      const token =
+        localStorage.getItem("reportard_token") || "";
+
+      if (!token || !reporte.id) return;
+
+      try {
+        setCargandoReacciones(true);
+        setErrorReacciones("");
+
+        const respuesta = await obtenerReacciones(
+          token,
+          "report",
+          reporte.id,
+        );
+
+        setTotalReacciones(respuesta.total ?? 0);
+        setResumenReacciones(respuesta.resumen || {});
+        setMiReaccion(respuesta.miReaccion || null);
+      } catch (error) {
+        console.error(
+          "Error cargando reacciones:",
+          error,
+        );
+
+        setErrorReacciones(
+          error.message ||
+          "No se pudieron cargar las reacciones.",
+        );
+      } finally {
+        setCargandoReacciones(false);
+      }
+    };
+
+    cargarReacciones();
+  }, [reporte.id]);
+
+
+  const seleccionarReaccion = async (tipoReaccion) => {
+    if (reaccionando) return;
+
+    const token =
+      localStorage.getItem("reportard_token") || "";
+
+    if (!token || !reporte.id) {
+      setErrorReacciones(
+        "No se pudo identificar la sesión o el reporte.",
+      );
+      return;
+    }
+
+    try {
+      setReaccionando(true);
+      setErrorReacciones("");
+
+      const respuesta = await reaccionarContenido(
+        token,
+        "report",
+        reporte.id,
+        tipoReaccion,
+      );
+
+      setTotalReacciones(respuesta.total ?? 0);
+      setResumenReacciones(respuesta.resumen || {});
+      setMiReaccion(respuesta.miReaccion || null);
+
+      setMostrarReacciones(false);
+    } catch (error) {
+      setErrorReacciones(
+        error.message ||
+        "No se pudo registrar la reacción.",
+      );
+    } finally {
+      setReaccionando(false);
+    }
+  };
 
   const cambiarConfirmacion = async () => {
     if (esPropio || confirmando) {
@@ -275,71 +444,295 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
     }
   };
 
-  const comentariosLocales = comentarios.reduce(
-    (total, comentario) =>
-      total + 1 + comentario.respuestas.length,
-    0,
-  );
+  const contarComentarios = (lista) => {
+    return lista.reduce(
+      (total, comentario) =>
+        total +
+        1 +
+        contarComentarios(comentario.respuestas || []),
+      0,
+    );
+  };
 
-  const totalComentarios =
-    reporte.comentarios + comentariosLocales;
+  const totalComentarios = comentariosCargados
+    ? contarComentarios(comentarios)
+    : reporte.comentarios ?? 0;
 
   const totalCompartidos =
-    reporte.compartidos + compartidosLocales;
+    (reporte.compartidos ?? 0) + compartidosLocales;
 
-  const agregarComentario = (evento) => {
+  const reaccionActiva = REACCIONES_REPORTE.find(
+    (reaccion) => reaccion.id === miReaccion,
+  );
+
+  const obtenerIniciales = (nombre = "") => {
+    const partes = nombre.trim().split(/\s+/).filter(Boolean);
+
+    if (partes.length === 0) return "RD";
+
+    return partes
+      .slice(0, 2)
+      .map((parte) => parte.charAt(0).toUpperCase())
+      .join("");
+  };
+
+  const formatearTiempoComentario = (fecha) => {
+    if (!fecha) return "Ahora";
+
+    const fechaComentario = new Date(fecha);
+    const diferencia =
+      Date.now() - fechaComentario.getTime();
+
+    const minutos = Math.floor(diferencia / 60000);
+
+    if (minutos < 1) return "Ahora";
+    if (minutos < 60) return `Hace ${minutos} min`;
+
+    const horas = Math.floor(minutos / 60);
+
+    if (horas < 24) {
+      return `Hace ${horas} h`;
+    }
+
+    const dias = Math.floor(horas / 24);
+
+    if (dias < 7) {
+      return `Hace ${dias} d`;
+    }
+
+    return new Intl.DateTimeFormat("es-DO", {
+      day: "numeric",
+      month: "short",
+    }).format(fechaComentario);
+  };
+
+  const convertirComentario = (comentario) => {
+    const nombreAutor =
+      comentario.autor?.nombre ||
+      "Ciudadano ReportaRD";
+
+    return {
+      id: comentario._id,
+      autorId:
+        comentario.autor?._id ||
+        comentario.autor?.id ||
+        "",
+      autor: nombreAutor,
+      usuario: comentario.autor?.usuario || "",
+      foto: comentario.autor?.foto || "",
+      iniciales: obtenerIniciales(nombreAutor),
+      contenido: comentario.contenido,
+      tiempo: formatearTiempoComentario(
+        comentario.createdAt,
+      ),
+      respuestaA:
+        comentario.respuestaA?._id ||
+        comentario.respuestaA ||
+        null,
+      respuestas: [],
+    };
+  };
+
+  const organizarComentarios = (lista = []) => {
+    const mapa = new Map();
+    const principales = [];
+
+    lista.forEach((comentario) => {
+      const convertido = convertirComentario(comentario);
+      mapa.set(String(convertido.id), convertido);
+    });
+
+    lista.forEach((comentario) => {
+      const convertido = mapa.get(
+        String(comentario._id),
+      );
+
+      const respuestaA =
+        comentario.respuestaA?._id ||
+        comentario.respuestaA ||
+        null;
+
+      if (respuestaA) {
+        const padre = mapa.get(String(respuestaA));
+
+        if (padre) {
+          padre.respuestas.push(convertido);
+          return;
+        }
+      }
+
+      principales.push(convertido);
+    });
+
+    return principales;
+  };
+
+  const cargarComentariosReales = async () => {
+    const token =
+      localStorage.getItem("reportard_token") || "";
+
+    if (!token || !reporte.id) return;
+
+    try {
+      setCargandoComentarios(true);
+      setErrorComentarios("");
+
+      const respuesta = await listarComentarios(
+        token,
+        "report",
+        reporte.id,
+      );
+
+      setComentarios(
+        organizarComentarios(
+          respuesta.comentarios || [],
+        ),
+      );
+
+      setComentariosCargados(true);
+    } catch (error) {
+      setErrorComentarios(
+        error.message ||
+        "No se pudieron cargar los comentarios.",
+      );
+    } finally {
+      setCargandoComentarios(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!mostrarComentarios) return;
+
+    cargarComentariosReales();
+  }, [mostrarComentarios, reporte.id]);
+
+  const agregarComentario = async (evento) => {
     evento.preventDefault();
 
     const contenido = nuevoComentario.trim();
 
-    if (!contenido) return;
+    if (!contenido || enviandoComentario) return;
 
-    const comentario = {
-      id: Date.now(),
-      autor: "Danny Torres",
-      iniciales: "DT",
-      contenido,
-      tiempo: "Ahora",
-      respuestas: [],
-    };
+    const token =
+      localStorage.getItem("reportard_token") || "";
 
-    setComentarios((comentariosActuales) => [
-      ...comentariosActuales,
-      comentario,
-    ]);
+    if (!token || !reporte.id) {
+      setErrorComentarios(
+        "No se pudo identificar la sesión o el reporte.",
+      );
+      return;
+    }
 
-    setNuevoComentario("");
+    try {
+      setEnviandoComentario(true);
+      setErrorComentarios("");
+
+      const respuesta = await crearComentario(
+        token,
+        "report",
+        reporte.id,
+        contenido,
+      );
+
+      const comentarioNuevo = convertirComentario(
+        respuesta.comentario,
+      );
+
+      setComentarios((actuales) => [
+        ...actuales,
+        comentarioNuevo,
+      ]);
+
+      setComentariosCargados(true);
+      setNuevoComentario("");
+    } catch (error) {
+      setErrorComentarios(
+        error.message ||
+        "No se pudo publicar el comentario.",
+      );
+    } finally {
+      setEnviandoComentario(false);
+    }
   };
 
-  const agregarRespuesta = (comentarioId) => {
+  const agregarRespuesta = async (comentarioId) => {
     const contenido = nuevaRespuesta.trim();
 
-    if (!contenido) return;
+    if (!contenido || enviandoRespuesta) return;
 
-    setComentarios((comentariosActuales) =>
-      comentariosActuales.map((comentario) => {
-        if (comentario.id !== comentarioId) {
-          return comentario;
-        }
+    const token =
+      localStorage.getItem("reportard_token") || "";
 
-        return {
-          ...comentario,
-          respuestas: [
-            ...comentario.respuestas,
-            {
-              id: Date.now(),
-              autor: "Danny Torres",
-              iniciales: "DT",
-              contenido,
-              tiempo: "Ahora",
-            },
-          ],
-        };
-      }),
+    if (!token || !reporte.id) {
+      setErrorComentarios(
+        "No se pudo identificar la sesión o el reporte.",
+      );
+      return;
+    }
+
+    try {
+      setEnviandoRespuesta(true);
+      setErrorComentarios("");
+
+      const respuesta = await crearComentario(
+        token,
+        "report",
+        reporte.id,
+        contenido,
+        comentarioId,
+      );
+
+      const respuestaNueva = convertirComentario(
+        respuesta.comentario,
+      );
+
+      setComentarios((actuales) =>
+        actuales.map((comentario) => {
+          if (
+            String(comentario.id) !==
+            String(comentarioId)
+          ) {
+            return comentario;
+          }
+
+          return {
+            ...comentario,
+            respuestas: [
+              ...(comentario.respuestas || []),
+              respuestaNueva,
+            ],
+          };
+        }),
+      );
+
+      setNuevaRespuesta("");
+      setComentarioRespondiendo(null);
+      setComentariosCargados(true);
+    } catch (error) {
+      setErrorComentarios(
+        error.message ||
+        "No se pudo publicar la respuesta.",
+      );
+    } finally {
+      setEnviandoRespuesta(false);
+    }
+  };
+
+  const abrirPerfilComentario = (autorId) => {
+    if (!autorId) return;
+
+    const miId = String(
+      usuarioActual._id ||
+      usuarioActual.id ||
+      "",
     );
 
-    setNuevaRespuesta("");
-    setComentarioRespondiendo(null);
+    if (miId && miId === String(autorId)) {
+      navigate("/perfil");
+      return;
+    }
+
+    navigate(`/usuario/${autorId}`);
   };
 
   const compartirReporte = async () => {
@@ -491,6 +884,149 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
         </div>
       )}
 
+      <div className="relative px-4 pt-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() =>
+                setMostrarReacciones(
+                  (estadoActual) => !estadoActual,
+                )
+              }
+              disabled={cargandoReacciones || reaccionando}
+              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition active:scale-95 ${reaccionActiva
+                  ? "border-blue-400/30 bg-blue-500/10 text-blue-300"
+                  : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                } ${reaccionando
+                  ? "cursor-wait opacity-60"
+                  : ""
+                }`}
+            >
+              <span className="text-xl">
+                {reaccionActiva?.emoji || "✨"}
+              </span>
+
+              <span>
+                {reaccionando
+                  ? "Reaccionando..."
+                  : reaccionActiva?.nombre || "Reaccionar"}
+              </span>
+            </button>
+
+            {mostrarReacciones && (
+              <div
+                className="
+            absolute bottom-full left-0 z-50 mb-3
+            w-[min(92vw,430px)]
+            rounded-3xl border border-white/10
+            bg-slate-950/95 p-3
+            shadow-2xl shadow-black/50
+            backdrop-blur-xl
+          "
+              >
+                <div className="mb-2 px-2">
+                  <p className="text-xs font-semibold text-white">
+                    ¿Qué te genera este reporte?
+                  </p>
+
+                  <p className="mt-0.5 text-[10px] text-slate-500">
+                    Selecciona una reacción ciudadana
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                  {REACCIONES_REPORTE.map((reaccion) => {
+                    const seleccionada =
+                      miReaccion === reaccion.id;
+
+                    const cantidad =
+                      resumenReacciones[reaccion.id] || 0;
+
+                    return (
+                      <button
+                        key={reaccion.id}
+                        type="button"
+                        disabled={reaccionando}
+                        onClick={() =>
+                          seleccionarReaccion(reaccion.id)
+                        }
+                        className={`group relative flex min-h-[82px] flex-col items-center justify-center rounded-2xl border px-2 py-3 transition duration-200 hover:-translate-y-1 active:scale-95 ${seleccionada
+                            ? "border-blue-400/40 bg-blue-500/15"
+                            : "border-white/5 bg-white/[0.035] hover:border-white/15 hover:bg-white/[0.07]"
+                          }`}
+                      >
+                        <span className="text-3xl transition duration-200 group-hover:scale-125">
+                          {reaccion.emoji}
+                        </span>
+
+                        <span
+                          className={`mt-1 text-center text-[10px] leading-tight ${seleccionada
+                              ? "font-semibold text-blue-300"
+                              : "text-slate-400"
+                            }`}
+                        >
+                          {reaccion.nombre}
+                        </span>
+
+                        {cantidad > 0 && (
+                          <span className="absolute right-1.5 top-1.5 rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] font-bold text-slate-300">
+                            {cantidad}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {miReaccion && (
+                  <p className="mt-3 text-center text-[10px] text-slate-500">
+                    Toca nuevamente tu reacción para quitarla.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 text-xs text-slate-400">
+            {totalReacciones > 0 && (
+              <>
+                <div className="flex -space-x-1">
+                  {REACCIONES_REPORTE
+                    .filter(
+                      (reaccion) =>
+                        (resumenReacciones[reaccion.id] || 0) >
+                        0,
+                    )
+                    .slice(0, 3)
+                    .map((reaccion) => (
+                      <span
+                        key={reaccion.id}
+                        className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-slate-950 bg-slate-800 text-sm"
+                      >
+                        {reaccion.emoji}
+                      </span>
+                    ))}
+                </div>
+
+                <span>
+                  {totalReacciones}{" "}
+                  {totalReacciones === 1
+                    ? "reacción"
+                    : "reacciones"}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {errorReacciones && (
+          <p className="mt-2 text-xs text-red-400">
+            {errorReacciones}
+          </p>
+        )}
+      </div>
+
       <div className="flex items-center justify-between px-4 py-4 text-xs text-slate-400">
         <div className="flex items-center gap-2">
           <span className="flex -space-x-1">
@@ -528,11 +1064,10 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
             type="button"
             onClick={cambiarConfirmacion}
             disabled={confirmando}
-            className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${
-              confirmado
-                ? "bg-red-500/10 text-red-400"
-                : "text-slate-400 hover:bg-white/5"
-            } ${confirmando ? "cursor-wait opacity-70" : ""}`}
+            className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${confirmado
+              ? "bg-red-500/10 text-red-400"
+              : "text-slate-400 hover:bg-white/5"
+              } ${confirmando ? "cursor-wait opacity-70" : ""}`}
           >
             <CheckCircle2
               size={21}
@@ -607,8 +1142,18 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
             onSubmit={agregarComentario}
             className="flex items-center gap-2"
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-red-500 text-xs font-bold">
-              DT
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-red-500 text-xs font-bold">
+              {usuarioActual.foto ? (
+                <img
+                  src={usuarioActual.foto}
+                  alt={usuarioActual.nombre || "Usuario"}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                obtenerIniciales(
+                  usuarioActual.nombre || "RD",
+                )
+              )}
             </div>
 
             <input
@@ -623,7 +1168,7 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
 
             <button
               type="submit"
-              disabled={!nuevoComentario.trim()}
+              disabled={!nuevoComentario.trim() || enviandoComentario}
               aria-label="Enviar comentario"
               className="rounded-full bg-blue-500 p-2.5 text-white transition disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -631,8 +1176,18 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
             </button>
           </form>
 
+          {errorComentarios && (
+            <div className="mt-3 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+              {errorComentarios}
+            </div>
+          )}
+
           <div className="mt-4 space-y-4">
-            {comentarios.length === 0 ? (
+            {cargandoComentarios && !comentariosCargados ? (
+              <p className="py-3 text-center text-xs text-slate-500">
+                Cargando comentarios...
+              </p>
+            ) : comentarios.length === 0 ? (
               <p className="py-3 text-center text-xs text-slate-500">
                 Sé el primero en comentar sobre este reporte.
               </p>
@@ -640,15 +1195,39 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
               comentarios.map((comentario) => (
                 <article key={comentario.id}>
                   <div className="flex items-start gap-2">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-red-500 text-[10px] font-bold">
-                      {comentario.iniciales}
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        abrirPerfilComentario(
+                          comentario.autorId,
+                        )
+                      }
+                      className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-red-500 text-[10px] font-bold"
+                    >
+                      {comentario.foto ? (
+                        <img
+                          src={comentario.foto}
+                          alt={comentario.autor}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        comentario.iniciales
+                      )}
+                    </button>
 
                     <div className="min-w-0 flex-1">
                       <div className="rounded-2xl bg-white/5 px-3 py-2">
-                        <p className="text-xs font-semibold">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            abrirPerfilComentario(
+                              comentario.autorId,
+                            )
+                          }
+                          className="text-xs font-semibold hover:underline"
+                        >
                           {comentario.autor}
-                        </p>
+                        </button>
 
                         <p className="mt-1 break-words text-sm text-slate-300">
                           {comentario.contenido}
@@ -679,14 +1258,38 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
                             key={respuesta.id}
                             className="ml-5 mt-3 flex items-start gap-2"
                           >
-                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-500/20 text-[9px] font-bold text-blue-300">
-                              {respuesta.iniciales}
-                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                abrirPerfilComentario(
+                                  respuesta.autorId,
+                                )
+                              }
+                              className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-500/20 text-[9px] font-bold text-blue-300"
+                            >
+                              {respuesta.foto ? (
+                                <img
+                                  src={respuesta.foto}
+                                  alt={respuesta.autor}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                respuesta.iniciales
+                              )}
+                            </button>
 
                             <div className="rounded-2xl bg-white/5 px-3 py-2">
-                              <p className="text-xs font-semibold">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  abrirPerfilComentario(
+                                    respuesta.autorId,
+                                  )
+                                }
+                                className="text-xs font-semibold hover:underline"
+                              >
                                 {respuesta.autor}
-                              </p>
+                              </button>
 
                               <p className="mt-1 text-sm text-slate-300">
                                 {respuesta.contenido}
@@ -709,7 +1312,11 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
                                 )
                               }
                               onKeyDown={(evento) => {
-                                if (evento.key === "Enter") {
+                                if (
+                                  evento.key === "Enter" &&
+                                  !enviandoRespuesta
+                                ) {
+                                  evento.preventDefault();
                                   agregarRespuesta(
                                     comentario.id,
                                   );
@@ -724,7 +1331,7 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
                               onClick={() =>
                                 agregarRespuesta(comentario.id)
                               }
-                              disabled={!nuevaRespuesta.trim()}
+                              disabled={!nuevaRespuesta.trim() || enviandoRespuesta}
                               className="rounded-full bg-blue-500 p-2 text-white disabled:opacity-40"
                             >
                               <Send size={14} />

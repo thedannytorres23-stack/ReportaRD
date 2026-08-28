@@ -120,9 +120,9 @@ const convertirPublicacion = (publicacion) => {
       contenido: publicacion.contenido,
       mediaUrl: publicacion.mediaUrl || null,
       mediaTipo: publicacion.mediaTipo || null,
-      reacciones: 0,
-      comentarios: 0,
-      compartidos: 0,
+      reacciones: publicacion.reacciones ?? 0,
+      comentarios: publicacion.comentarios ?? 0,
+      compartidos: publicacion.compartidos ?? 0,
     },
   };
 };
@@ -162,10 +162,9 @@ const convertirReporte = (reporte) => {
 
       mediaUrl: reporte.mediaUrl || null,
       mediaTipo: reporte.mediaTipo || null,
-
-      confirmaciones: reporte.confirmaciones || 0,
-      comentarios: 0,
-      compartidos: 0,
+      reacciones: reporte.reacciones ?? 0,
+      comentarios: reporte.comentarios ?? 0,
+      compartidos: reporte.compartidos ?? 0,
     },
   };
 };

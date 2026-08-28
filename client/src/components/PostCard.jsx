@@ -11,6 +11,10 @@ import {
 import { useNavigate } from "react-router";
 import ContentOptions from "./ContentOptions";
 import { eliminarPublicacion } from "../services/contentService";
+import {
+  crearComentario,
+  listarComentarios,
+} from "../services/commentService";
 
 export default function PostCard({ publicacion, modoDetalle = false }) {
   const navigate = useNavigate();
@@ -147,19 +151,17 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
     }
   });
 
-  const [comentarios, setComentarios] = useState(() => {
-    const datosGuardados = localStorage.getItem(
-      clavePublicacion,
-    );
-
-    if (!datosGuardados) return [];
-
-    try {
-      return JSON.parse(datosGuardados).comentarios ?? [];
-    } catch {
-      return [];
-    }
-  });
+  const [comentarios, setComentarios] = useState([]);
+  const [comentariosCargados, setComentariosCargados] =
+    useState(false);
+  const [cargandoComentarios, setCargandoComentarios] =
+    useState(false);
+  const [enviandoComentario, setEnviandoComentario] =
+    useState(false);
+  const [enviandoRespuesta, setEnviandoRespuesta] =
+    useState(false);
+  const [errorComentarios, setErrorComentarios] =
+    useState("");
 
   const [compartidosLocales, setCompartidosLocales] =
     useState(() => {
@@ -198,7 +200,6 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
       JSON.stringify({
         reaccionado,
         guardado,
-        comentarios,
         compartidosLocales,
       }),
     );
@@ -206,7 +207,6 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
     clavePublicacion,
     reaccionado,
     guardado,
-    comentarios,
     compartidosLocales,
   ]);
 
@@ -252,70 +252,292 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
   ]);
 
   const totalReacciones =
-    publicacion.reacciones + (reaccionado ? 1 : 0);
+    (publicacion.reacciones ?? 0) + (reaccionado ? 1 : 0);
 
-  const totalComentarios =
-    publicacion.comentarios + comentarios.length;
+  const contarComentarios = (lista) => {
+    return lista.reduce(
+      (total, comentario) =>
+        total +
+        1 +
+        contarComentarios(comentario.respuestas || []),
+      0,
+    );
+  };
+
+  const totalComentarios = comentariosCargados
+    ? contarComentarios(comentarios)
+    : publicacion.comentarios ?? 0;
 
   const totalCompartidos =
-    publicacion.compartidos + compartidosLocales;
+    (publicacion.compartidos ?? 0) + compartidosLocales;
 
-  const agregarComentario = (evento) => {
+  const obtenerIniciales = (nombre = "") => {
+    const partes = nombre.trim().split(/\s+/).filter(Boolean);
+
+    if (partes.length === 0) return "RD";
+
+    return partes
+      .slice(0, 2)
+      .map((parte) => parte.charAt(0).toUpperCase())
+      .join("");
+  };
+
+  const formatearTiempoComentario = (fecha) => {
+    if (!fecha) return "Ahora";
+
+    const fechaComentario = new Date(fecha);
+    const diferencia =
+      Date.now() - fechaComentario.getTime();
+
+    const minutos = Math.floor(diferencia / 60000);
+
+    if (minutos < 1) return "Ahora";
+    if (minutos < 60) return `Hace ${minutos} min`;
+
+    const horas = Math.floor(minutos / 60);
+
+    if (horas < 24) {
+      return `Hace ${horas} h`;
+    }
+
+    const dias = Math.floor(horas / 24);
+
+    if (dias < 7) {
+      return `Hace ${dias} d`;
+    }
+
+    return new Intl.DateTimeFormat("es-DO", {
+      day: "numeric",
+      month: "short",
+    }).format(fechaComentario);
+  };
+
+  const convertirComentario = (comentario) => {
+    const nombreAutor =
+      comentario.autor?.nombre ||
+      "Ciudadano ReportaRD";
+
+    return {
+      id: comentario._id,
+      autorId:
+        comentario.autor?._id ||
+        comentario.autor?.id ||
+        "",
+      autor: nombreAutor,
+      usuario: comentario.autor?.usuario || "",
+      foto: comentario.autor?.foto || "",
+      iniciales: obtenerIniciales(nombreAutor),
+      contenido: comentario.contenido,
+      tiempo: formatearTiempoComentario(
+        comentario.createdAt,
+      ),
+      respuestaA:
+        comentario.respuestaA?._id ||
+        comentario.respuestaA ||
+        null,
+      respuestas: [],
+    };
+  };
+
+  const organizarComentarios = (lista = []) => {
+    const mapa = new Map();
+    const principales = [];
+
+    lista.forEach((comentario) => {
+      const convertido = convertirComentario(comentario);
+      mapa.set(String(convertido.id), convertido);
+    });
+
+    lista.forEach((comentario) => {
+      const convertido = mapa.get(
+        String(comentario._id),
+      );
+
+      const respuestaA =
+        comentario.respuestaA?._id ||
+        comentario.respuestaA ||
+        null;
+
+      if (respuestaA) {
+        const padre = mapa.get(String(respuestaA));
+
+        if (padre) {
+          padre.respuestas.push(convertido);
+          return;
+        }
+      }
+
+      principales.push(convertido);
+    });
+
+    return principales;
+  };
+
+  const cargarComentariosReales = async () => {
+    const token =
+      localStorage.getItem("reportard_token") || "";
+
+    if (!token || !publicacion.id) {
+      return;
+    }
+
+    try {
+      setCargandoComentarios(true);
+      setErrorComentarios("");
+
+      const respuesta = await listarComentarios(
+        token,
+        "post",
+        publicacion.id,
+      );
+
+      setComentarios(
+        organizarComentarios(
+          respuesta.comentarios || [],
+        ),
+      );
+
+      setComentariosCargados(true);
+    } catch (error) {
+      setErrorComentarios(
+        error.message ||
+          "No se pudieron cargar los comentarios.",
+      );
+    } finally {
+      setCargandoComentarios(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!mostrarComentarios) return;
+
+    cargarComentariosReales();
+  }, [mostrarComentarios, publicacion.id]);
+
+  const agregarComentario = async (evento) => {
     evento.preventDefault();
 
     const contenido = nuevoComentario.trim();
 
-    if (!contenido) return;
+    if (!contenido || enviandoComentario) return;
 
-    const comentario = {
-      id: Date.now(),
-      autor: usuarioActual.nombre || "Ciudadano ReportaRD",
-      iniciales: (usuarioActual.nombre || "RD")
-        .split(/\s+/)
-        .slice(0, 2)
-        .map((parte) => parte.charAt(0).toUpperCase())
-        .join(""),
-      contenido,
-      tiempo: "Ahora",
-      respuestas: [],
-    };
+    const token =
+      localStorage.getItem("reportard_token") || "";
 
-    setComentarios((comentariosActuales) => [
-      ...comentariosActuales,
-      comentario,
-    ]);
+    if (!token || !publicacion.id) {
+      setErrorComentarios(
+        "No se pudo identificar la sesión o la publicación.",
+      );
+      return;
+    }
 
-    setNuevoComentario("");
+    try {
+      setEnviandoComentario(true);
+      setErrorComentarios("");
+
+      const respuesta = await crearComentario(
+        token,
+        "post",
+        publicacion.id,
+        contenido,
+      );
+
+      const comentarioNuevo = convertirComentario(
+        respuesta.comentario,
+      );
+
+      setComentarios((actuales) => [
+        ...actuales,
+        comentarioNuevo,
+      ]);
+
+      setComentariosCargados(true);
+      setNuevoComentario("");
+    } catch (error) {
+      setErrorComentarios(
+        error.message ||
+          "No se pudo publicar el comentario.",
+      );
+    } finally {
+      setEnviandoComentario(false);
+    }
   };
 
-  const agregarRespuesta = (comentarioId) => {
+  const agregarRespuesta = async (comentarioId) => {
     const contenido = nuevaRespuesta.trim();
 
-    if (!contenido) return;
+    if (!contenido || enviandoRespuesta) return;
 
-    setComentarios((comentariosActuales) =>
-      comentariosActuales.map((comentario) => {
-        if (comentario.id !== comentarioId) {
-          return comentario;
-        }
+    const token =
+      localStorage.getItem("reportard_token") || "";
 
-        return {
-          ...comentario,
-          respuestas: [
-            ...comentario.respuestas,
-            {
-              id: Date.now(),
-              autor: usuarioActual.nombre || "Ciudadano ReportaRD",
-              contenido,
-              tiempo: "Ahora",
-            },
-          ],
-        };
-      }),
+    if (!token || !publicacion.id) {
+      setErrorComentarios(
+        "No se pudo identificar la sesión o la publicación.",
+      );
+      return;
+    }
+
+    try {
+      setEnviandoRespuesta(true);
+      setErrorComentarios("");
+
+      const respuesta = await crearComentario(
+        token,
+        "post",
+        publicacion.id,
+        contenido,
+        comentarioId,
+      );
+
+      const respuestaNueva = convertirComentario(
+        respuesta.comentario,
+      );
+
+      setComentarios((actuales) =>
+        actuales.map((comentario) => {
+          if (String(comentario.id) !== String(comentarioId)) {
+            return comentario;
+          }
+
+          return {
+            ...comentario,
+            respuestas: [
+              ...(comentario.respuestas || []),
+              respuestaNueva,
+            ],
+          };
+        }),
+      );
+
+      setNuevaRespuesta("");
+      setComentarioRespondiendo(null);
+      setComentariosCargados(true);
+    } catch (error) {
+      setErrorComentarios(
+        error.message ||
+          "No se pudo publicar la respuesta.",
+      );
+    } finally {
+      setEnviandoRespuesta(false);
+    }
+  };
+
+  const abrirPerfilComentario = (autorId) => {
+    if (!autorId) return;
+
+    const miId = String(
+      usuarioActual._id ||
+      usuarioActual.id ||
+      "",
     );
 
-    setNuevaRespuesta("");
-    setComentarioRespondiendo(null);
+    if (miId && miId === String(autorId)) {
+      navigate("/perfil");
+      return;
+    }
+
+    navigate(`/usuario/${autorId}`);
   };
 
   const compartirPublicacion = async () => {
@@ -565,8 +787,18 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
             onSubmit={agregarComentario}
             className="flex items-center gap-2"
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-red-500 text-xs font-bold">
-              DT
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-red-500 text-xs font-bold">
+              {usuarioActual.foto ? (
+                <img
+                  src={usuarioActual.foto}
+                  alt={usuarioActual.nombre || "Usuario"}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                obtenerIniciales(
+                  usuarioActual.nombre || "RD",
+                )
+              )}
             </div>
 
             <input
@@ -581,7 +813,7 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
 
             <button
               type="submit"
-              disabled={!nuevoComentario.trim()}
+              disabled={!nuevoComentario.trim() || enviandoComentario}
               aria-label="Enviar comentario"
               className="rounded-full bg-blue-500 p-2.5 text-white transition disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -589,8 +821,18 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
             </button>
           </form>
 
+          {errorComentarios && (
+            <div className="mt-3 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+              {errorComentarios}
+            </div>
+          )}
+
           <div className="mt-4 space-y-4">
-            {comentarios.length === 0 ? (
+            {cargandoComentarios && !comentariosCargados ? (
+              <p className="py-3 text-center text-xs text-slate-500">
+                Cargando comentarios...
+              </p>
+            ) : comentarios.length === 0 ? (
               <p className="py-3 text-center text-xs text-slate-500">
                 Sé el primero en comentar.
               </p>
@@ -598,15 +840,39 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
               comentarios.map((comentario) => (
                 <article key={comentario.id}>
                   <div className="flex items-start gap-2">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-red-500 text-[10px] font-bold">
-                      {comentario.iniciales}
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        abrirPerfilComentario(
+                          comentario.autorId,
+                        )
+                      }
+                      className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-red-500 text-[10px] font-bold"
+                    >
+                      {comentario.foto ? (
+                        <img
+                          src={comentario.foto}
+                          alt={comentario.autor}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        comentario.iniciales
+                      )}
+                    </button>
 
                     <div className="min-w-0 flex-1">
                       <div className="rounded-2xl bg-white/5 px-3 py-2">
-                        <p className="text-xs font-semibold text-white">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            abrirPerfilComentario(
+                              comentario.autorId,
+                            )
+                          }
+                          className="text-xs font-semibold text-white hover:underline"
+                        >
                           {comentario.autor}
-                        </p>
+                        </button>
 
                         <p className="mt-1 break-words text-sm text-slate-300">
                           {comentario.contenido}
@@ -637,14 +903,38 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
                             key={respuesta.id}
                             className="ml-5 mt-3 flex items-start gap-2"
                           >
-                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-500/20 text-[9px] font-bold text-blue-300">
-                              DT
-                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                abrirPerfilComentario(
+                                  respuesta.autorId,
+                                )
+                              }
+                              className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-500/20 text-[9px] font-bold text-blue-300"
+                            >
+                              {respuesta.foto ? (
+                                <img
+                                  src={respuesta.foto}
+                                  alt={respuesta.autor}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                respuesta.iniciales
+                              )}
+                            </button>
 
                             <div className="rounded-2xl bg-white/5 px-3 py-2">
-                              <p className="text-xs font-semibold">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  abrirPerfilComentario(
+                                    respuesta.autorId,
+                                  )
+                                }
+                                className="text-xs font-semibold hover:underline"
+                              >
                                 {respuesta.autor}
-                              </p>
+                              </button>
 
                               <p className="mt-1 text-sm text-slate-300">
                                 {respuesta.contenido}
@@ -667,7 +957,11 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
                                 )
                               }
                               onKeyDown={(evento) => {
-                                if (evento.key === "Enter") {
+                                if (
+                                  evento.key === "Enter" &&
+                                  !enviandoRespuesta
+                                ) {
+                                  evento.preventDefault();
                                   agregarRespuesta(
                                     comentario.id,
                                   );
@@ -682,7 +976,7 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
                               onClick={() =>
                                 agregarRespuesta(comentario.id)
                               }
-                              disabled={!nuevaRespuesta.trim()}
+                              disabled={!nuevaRespuesta.trim() || enviandoRespuesta}
                               className="rounded-full bg-blue-500 p-2 text-white disabled:opacity-40"
                             >
                               <Send size={14} />
