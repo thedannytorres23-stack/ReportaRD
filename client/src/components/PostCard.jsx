@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Bookmark,
   CheckCircle2,
-  Heart,
   MessageCircle,
   Send,
   Share2,
@@ -15,6 +14,46 @@ import {
   crearComentario,
   listarComentarios,
 } from "../services/commentService";
+
+import {
+  obtenerReacciones,
+  reaccionarContenido,
+} from "../services/reactionService";
+
+
+
+const REACCIONES_PUBLICACION = [
+  {
+    id: "me_importa",
+    emoji: "❤️",
+    nombre: "Me importa",
+  },
+  {
+    id: "buena_idea",
+    emoji: "💡",
+    nombre: "Buena idea",
+  },
+  {
+    id: "buen_aporte",
+    emoji: "👏",
+    nombre: "Buen aporte",
+  },
+  {
+    id: "impactante",
+    emoji: "😮",
+    nombre: "Impactante",
+  },
+  {
+    id: "indignante",
+    emoji: "😡",
+    nombre: "Indignante",
+  },
+  {
+    id: "apoyo_ciudadano",
+    emoji: "🛡️",
+    nombre: "Apoyo ciudadano",
+  },
+];
 
 export default function PostCard({ publicacion, modoDetalle = false }) {
   const navigate = useNavigate();
@@ -123,19 +162,7 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
     [publicacion],
   );
 
-  const [reaccionado, setReaccionado] = useState(() => {
-    const datosGuardados = localStorage.getItem(
-      clavePublicacion,
-    );
 
-    if (!datosGuardados) return false;
-
-    try {
-      return JSON.parse(datosGuardados).reaccionado ?? false;
-    } catch {
-      return false;
-    }
-  });
 
   const [guardado, setGuardado] = useState(() => {
     const datosGuardados = localStorage.getItem(
@@ -194,18 +221,37 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
   const [mensajeCompartido, setMensajeCompartido] =
     useState("");
 
+  const [mostrarReacciones, setMostrarReacciones] =
+    useState(false);
+
+  const [totalReacciones, setTotalReacciones] =
+    useState(publicacion.reacciones ?? 0);
+
+  const [resumenReacciones, setResumenReacciones] =
+    useState({});
+
+  const [miReaccion, setMiReaccion] =
+    useState(null);
+
+  const [cargandoReacciones, setCargandoReacciones] =
+    useState(false);
+
+  const [reaccionando, setReaccionando] =
+    useState(false);
+
+  const [errorReacciones, setErrorReacciones] =
+    useState("");
+
   useEffect(() => {
     localStorage.setItem(
       clavePublicacion,
       JSON.stringify({
-        reaccionado,
         guardado,
         compartidosLocales,
       }),
     );
   }, [
     clavePublicacion,
-    reaccionado,
     guardado,
     compartidosLocales,
   ]);
@@ -251,8 +297,86 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
     publicacion.autor,
   ]);
 
-  const totalReacciones =
-    (publicacion.reacciones ?? 0) + (reaccionado ? 1 : 0);
+  useEffect(() => {
+    const cargarReacciones = async () => {
+      const token =
+        localStorage.getItem("reportard_token") || "";
+
+      if (!token || !publicacion.id) return;
+
+      try {
+        setCargandoReacciones(true);
+        setErrorReacciones("");
+
+        const respuesta = await obtenerReacciones(
+          token,
+          "post",
+          publicacion.id,
+        );
+
+        setTotalReacciones(respuesta.total ?? 0);
+        setResumenReacciones(respuesta.resumen || {});
+        setMiReaccion(respuesta.miReaccion || null);
+      } catch (error) {
+        console.error(
+          "Error cargando reacciones:",
+          error,
+        );
+
+        setErrorReacciones(
+          error.message ||
+          "No se pudieron cargar las reacciones.",
+        );
+      } finally {
+        setCargandoReacciones(false);
+      }
+    };
+
+    cargarReacciones();
+  }, [publicacion.id]);
+
+  const seleccionarReaccion = async (tipoReaccion) => {
+    if (reaccionando) return;
+
+    const token =
+      localStorage.getItem("reportard_token") || "";
+
+    if (!token || !publicacion.id) {
+      setErrorReacciones(
+        "No se pudo identificar la sesión o la publicación.",
+      );
+      return;
+    }
+
+    try {
+      setReaccionando(true);
+      setErrorReacciones("");
+
+      const respuesta = await reaccionarContenido(
+        token,
+        "post",
+        publicacion.id,
+        tipoReaccion,
+      );
+
+      setTotalReacciones(respuesta.total ?? 0);
+      setResumenReacciones(respuesta.resumen || {});
+      setMiReaccion(respuesta.miReaccion || null);
+
+      setMostrarReacciones(false);
+    } catch (error) {
+      setErrorReacciones(
+        error.message ||
+        "No se pudo registrar la reacción.",
+      );
+    } finally {
+      setReaccionando(false);
+    }
+  };
+
+  const reaccionActiva = REACCIONES_PUBLICACION.find(
+    (reaccion) => reaccion.id === miReaccion,
+  );
 
   const contarComentarios = (lista) => {
     return lista.reduce(
@@ -401,7 +525,7 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
     } catch (error) {
       setErrorComentarios(
         error.message ||
-          "No se pudieron cargar los comentarios.",
+        "No se pudieron cargar los comentarios.",
       );
     } finally {
       setCargandoComentarios(false);
@@ -456,7 +580,7 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
     } catch (error) {
       setErrorComentarios(
         error.message ||
-          "No se pudo publicar el comentario.",
+        "No se pudo publicar el comentario.",
       );
     } finally {
       setEnviandoComentario(false);
@@ -516,7 +640,7 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
     } catch (error) {
       setErrorComentarios(
         error.message ||
-          "No se pudo publicar la respuesta.",
+        "No se pudo publicar la respuesta.",
       );
     } finally {
       setEnviandoRespuesta(false);
@@ -681,20 +805,179 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
         </div>
       )}
 
-      <div className="flex items-center justify-between px-4 py-4 text-xs text-slate-400">
-        <button
-          type="button"
-          onClick={() =>
-            setReaccionado((estadoActual) => !estadoActual)
-          }
-          className="flex items-center gap-2"
-        >
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white">
-            <Heart size={11} fill="currentColor" />
-          </span>
+      <div className="relative px-4 pt-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() =>
+                setMostrarReacciones(
+                  (estadoActual) => !estadoActual,
+                )
+              }
+              disabled={cargandoReacciones || reaccionando}
+              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition active:scale-95 ${reaccionActiva
+                ? "border-violet-400/30 bg-violet-500/10 text-violet-300"
+                : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                } ${reaccionando
+                  ? "cursor-wait opacity-60"
+                  : ""
+                }`}
+            >
+              <span className="text-xl">
+                {reaccionActiva?.emoji || "✨"}
+              </span>
 
-          <span>{totalReacciones} reacciones</span>
-        </button>
+              <span>
+                {reaccionando
+                  ? "Reaccionando..."
+                  : reaccionActiva?.nombre || "Reaccionar"}
+              </span>
+            </button>
+
+            {mostrarReacciones && (
+              <div
+                className="
+            absolute bottom-full left-0 z-50 mb-3
+            w-[min(92vw,430px)]
+            rounded-3xl border border-white/10
+            bg-slate-950/95 p-3
+            shadow-2xl shadow-black/50
+            backdrop-blur-xl
+          "
+              >
+                <div className="mb-2 px-2">
+                  <p className="text-xs font-semibold text-white">
+                    ¿Qué piensas de esta publicación?
+                  </p>
+
+                  <p className="mt-0.5 text-[10px] text-slate-500">
+                    Elige una reacción
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                  {REACCIONES_PUBLICACION.map((reaccion) => {
+                    const seleccionada =
+                      miReaccion === reaccion.id;
+
+                    const cantidad =
+                      resumenReacciones[reaccion.id] || 0;
+
+                    return (
+                      <button
+                        key={reaccion.id}
+                        type="button"
+                        disabled={reaccionando}
+                        onClick={() =>
+                          seleccionarReaccion(reaccion.id)
+                        }
+                        className={`group relative flex min-h-[82px] flex-col items-center justify-center rounded-2xl border px-2 py-3 transition duration-200 hover:-translate-y-1 active:scale-95 ${seleccionada
+                          ? "border-violet-400/40 bg-violet-500/15"
+                          : "border-white/5 bg-white/[0.035] hover:border-white/15 hover:bg-white/[0.07]"
+                          }`}
+                      >
+                        <span className="text-3xl transition duration-200 group-hover:scale-125">
+                          {reaccion.emoji}
+                        </span>
+
+                        <span
+                          className={`mt-1 text-center text-[10px] leading-tight ${seleccionada
+                            ? "font-semibold text-violet-300"
+                            : "text-slate-400"
+                            }`}
+                        >
+                          {reaccion.nombre}
+                        </span>
+
+                        {cantidad > 0 && (
+                          <span className="absolute right-1.5 top-1.5 rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] font-bold text-slate-300">
+                            {cantidad}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {miReaccion && (
+                  <p className="mt-3 text-center text-[10px] text-slate-500">
+                    Toca nuevamente tu reacción para quitarla.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {totalReacciones > 0 && (
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <div className="flex -space-x-1">
+                {REACCIONES_PUBLICACION
+                  .filter(
+                    (reaccion) =>
+                      (resumenReacciones[reaccion.id] || 0) > 0,
+                  )
+                  .slice(0, 3)
+                  .map((reaccion) => (
+                    <span
+                      key={reaccion.id}
+                      className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-slate-950 bg-slate-800 text-sm"
+                    >
+                      {reaccion.emoji}
+                    </span>
+                  ))}
+              </div>
+
+              <span>
+                {totalReacciones}{" "}
+                {totalReacciones === 1
+                  ? "reacción"
+                  : "reacciones"}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {errorReacciones && (
+          <p className="mt-2 text-xs text-red-400">
+            {errorReacciones}
+          </p>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between px-4 py-4 text-xs text-slate-400">
+
+        <div className="flex items-center gap-2">
+          {totalReacciones > 0 ? (
+            <>
+              <span className="flex -space-x-1">
+                {REACCIONES_PUBLICACION
+                  .filter(
+                    (reaccion) =>
+                      (resumenReacciones[reaccion.id] || 0) > 0,
+                  )
+                  .slice(0, 3)
+                  .map((reaccion) => (
+                    <span
+                      key={reaccion.id}
+                      className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-950 bg-slate-800 text-[10px]"
+                    >
+                      {reaccion.emoji}
+                    </span>
+                  ))}
+              </span>
+
+              <span>
+                {totalReacciones}{" "}
+                {totalReacciones === 1
+                  ? "reacción"
+                  : "reacciones"}
+              </span>
+            </>
+          ) : (
+            <span>Sin reacciones</span>
+          )}
+        </div>
 
         <div className="flex gap-3">
           <button
@@ -718,18 +1001,25 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
         <button
           type="button"
           onClick={() =>
-            setReaccionado((estadoActual) => !estadoActual)
+            setMostrarReacciones(
+              (estadoActual) => !estadoActual,
+            )
           }
-          className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${reaccionado
-              ? "bg-red-500/10 text-red-400"
+          disabled={reaccionando}
+          className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${reaccionActiva
+              ? "bg-violet-500/10 text-violet-300"
               : "text-slate-400 hover:bg-white/5"
             }`}
         >
-          <Heart
-            size={21}
-            fill={reaccionado ? "currentColor" : "none"}
-          />
-          Me gusta
+          <span className="text-[21px] leading-none">
+            {reaccionActiva?.emoji || "✨"}
+          </span>
+
+          <span>
+            {reaccionActiva
+              ? reaccionActiva.nombre
+              : "Reaccionar"}
+          </span>
         </button>
 
         <button
@@ -740,8 +1030,8 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
             )
           }
           className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${mostrarComentarios
-              ? "bg-blue-500/10 text-blue-400"
-              : "text-slate-400 hover:bg-white/5"
+            ? "bg-blue-500/10 text-blue-400"
+            : "text-slate-400 hover:bg-white/5"
             }`}
         >
           <MessageCircle size={21} />
@@ -769,8 +1059,8 @@ export default function PostCard({ publicacion, modoDetalle = false }) {
             setGuardado((estadoActual) => !estadoActual)
           }
           className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition ${guardado
-              ? "text-amber-400"
-              : "text-slate-400 hover:bg-white/5"
+            ? "text-amber-400"
+            : "text-slate-400 hover:bg-white/5"
             }`}
         >
           <Bookmark
