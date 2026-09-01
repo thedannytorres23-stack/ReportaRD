@@ -1,145 +1,388 @@
-import { useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import {
   ArrowLeft,
   Bell,
   CheckCheck,
   CheckCircle2,
+  Heart,
   MessageCircle,
-  RefreshCw,
+  Reply,
   UserPlus,
-  Users,
 } from "lucide-react";
+
 import { useNavigate } from "react-router";
 
-const notificacionesIniciales = [
-  {
-    id: 1,
-    tipo: "confirmacion",
-    titulo: "Nueva confirmación",
-    mensaje:
-      "Laura Méndez confirmó tu reporte sobre la fuga de agua.",
-    tiempo: "Hace 2 min",
-    leida: false,
-  },
-  {
-    id: 2,
-    tipo: "estado",
-    titulo: "Tu reporte cambió de estado",
-    mensaje:
-      'El reporte "Lámpara averiada frente al parque" ahora está en revisión.',
-    tiempo: "Hace 18 min",
-    leida: false,
-  },
-  {
-    id: 3,
-    tipo: "comentario",
-    titulo: "Nuevo comentario",
-    mensaje:
-      "Carlos Rodríguez comentó en tu publicación comunitaria.",
-    tiempo: "Hace 35 min",
-    leida: false,
-  },
-  {
-    id: 4,
-    tipo: "amistad",
-    titulo: "Solicitud de amistad",
-    mensaje:
-      "María Fernández quiere conectar contigo en ReportaRD.",
-    tiempo: "Hace 1 h",
-    leida: true,
-  },
-  {
-    id: 5,
-    tipo: "comunidad",
-    titulo: "Actividad en tu comunidad",
-    mensaje:
-      "Santiago Centro publicó una nueva jornada comunitaria.",
-    tiempo: "Hace 3 h",
-    leida: true,
-  },
-];
+const API_URL = (
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:5000/api"
+).replace(/\/$/, "");
 
-const iconos = {
+const configuracionTipos = {
   confirmacion: {
+    titulo: "Nueva confirmación",
     icono: CheckCircle2,
-    color: "bg-green-500/15 text-green-400",
+    color:
+      "bg-green-500/15 text-green-400",
   },
-  estado: {
-    icono: RefreshCw,
-    color: "bg-amber-500/15 text-amber-400",
-  },
+
   comentario: {
+    titulo: "Nuevo comentario",
     icono: MessageCircle,
-    color: "bg-blue-500/15 text-blue-400",
+    color:
+      "bg-blue-500/15 text-blue-400",
   },
-  amistad: {
+
+  respuesta: {
+    titulo: "Nueva respuesta",
+    icono: Reply,
+    color:
+      "bg-cyan-500/15 text-cyan-400",
+  },
+
+  reaccion: {
+    titulo: "Nueva reacción",
+    icono: Heart,
+    color:
+      "bg-red-500/15 text-red-400",
+  },
+
+  seguimiento: {
+    titulo: "Nuevo seguidor",
     icono: UserPlus,
-    color: "bg-violet-500/15 text-violet-400",
+    color:
+      "bg-violet-500/15 text-violet-400",
   },
-  comunidad: {
-    icono: Users,
-    color: "bg-red-500/15 text-red-400",
-  },
+};
+
+const obtenerToken = () => {
+  const tokenDirecto =
+    localStorage.getItem("reportard_token");
+
+  if (tokenDirecto) {
+    return tokenDirecto;
+  }
+
+  try {
+    const usuario = JSON.parse(
+      localStorage.getItem(
+        "reportard_user",
+      ) || "{}",
+    );
+
+    return usuario.token || "";
+  } catch {
+    return "";
+  }
+};
+
+const procesarRespuesta = async (
+  respuesta,
+) => {
+  let datos;
+
+  try {
+    datos = await respuesta.json();
+  } catch {
+    throw new Error(
+      "El servidor devolvió una respuesta inválida.",
+    );
+  }
+
+  if (!respuesta.ok) {
+    throw new Error(
+      datos.mensaje ||
+        "No se pudo completar la solicitud.",
+    );
+  }
+
+  return datos;
+};
+
+const obtenerNombreEmisor = (
+  notificacion,
+) => {
+  const emisor =
+    notificacion.emisor;
+
+  if (!emisor) {
+    return "Alguien";
+  }
+
+  return (
+    emisor.nombre ||
+    emisor.nombreUsuario ||
+    emisor.usuario ||
+    "Alguien"
+  );
+};
+
+const obtenerTiempo = (
+  fecha,
+) => {
+  if (!fecha) {
+    return "";
+  }
+
+  const creada = new Date(fecha);
+  const ahora = new Date();
+
+  const diferencia =
+    ahora.getTime() -
+    creada.getTime();
+
+  const minutos = Math.floor(
+    diferencia / 60000,
+  );
+
+  if (minutos < 1) {
+    return "Ahora";
+  }
+
+  if (minutos < 60) {
+    return `Hace ${minutos} min`;
+  }
+
+  const horas = Math.floor(
+    minutos / 60,
+  );
+
+  if (horas < 24) {
+    return `Hace ${horas} ${
+      horas === 1 ? "h" : "h"
+    }`;
+  }
+
+  const dias = Math.floor(
+    horas / 24,
+  );
+
+  if (dias < 7) {
+    return `Hace ${dias} ${
+      dias === 1 ? "día" : "días"
+    }`;
+  }
+
+  return creada.toLocaleDateString(
+    "es-DO",
+    {
+      day: "numeric",
+      month: "short",
+      year:
+        creada.getFullYear() !==
+        ahora.getFullYear()
+          ? "numeric"
+          : undefined,
+    },
+  );
 };
 
 export default function Notifications() {
   const navigate = useNavigate();
 
-  const todasLeidasGuardadas =
-    localStorage.getItem("reportard_notifications_read") === "true";
+  const [filtro, setFiltro] =
+    useState("todas");
 
-  const [filtro, setFiltro] = useState("todas");
+  const [
+    notificaciones,
+    setNotificaciones,
+  ] = useState([]);
 
-  const [notificaciones, setNotificaciones] = useState(() => {
-    if (todasLeidasGuardadas) {
-      return notificacionesIniciales.map((notificacion) => ({
-        ...notificacion,
-        leida: true,
-      }));
+  const [cargando, setCargando] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+  const [
+    marcandoTodas,
+    setMarcandoTodas,
+  ] = useState(false);
+
+  const token = obtenerToken();
+
+  const cargarNotificaciones =
+    async () => {
+      if (!token) {
+        setError(
+          "Tu sesión no es válida. Inicia sesión nuevamente.",
+        );
+
+        setCargando(false);
+
+        return;
+      }
+
+      try {
+        setCargando(true);
+        setError("");
+
+        const respuesta = await fetch(
+          `${API_URL}/notifications`,
+          {
+            headers: {
+              Authorization:
+                `Bearer ${token}`,
+            },
+          },
+        );
+
+        const datos =
+          await procesarRespuesta(
+            respuesta,
+          );
+
+        setNotificaciones(
+          Array.isArray(
+            datos.notificaciones,
+          )
+            ? datos.notificaciones
+            : [],
+        );
+      } catch (error) {
+        console.error(
+          "Error cargando notificaciones:",
+          error,
+        );
+
+        setError(
+          error.message ||
+            "No se pudieron cargar las notificaciones.",
+        );
+      } finally {
+        setCargando(false);
+      }
+    };
+
+  useEffect(() => {
+    cargarNotificaciones();
+  }, []);
+
+  const noLeidas =
+    notificaciones.filter(
+      (notificacion) =>
+        !notificacion.leida,
+    ).length;
+
+  const marcarComoLeida = async (
+    id,
+  ) => {
+    const notificacion =
+      notificaciones.find(
+        (item) => item._id === id,
+      );
+
+    if (
+      !notificacion ||
+      notificacion.leida
+    ) {
+      return;
     }
 
-    return notificacionesIniciales;
-  });
+    try {
+      const respuesta = await fetch(
+        `${API_URL}/notifications/${id}/leer`,
+        {
+          method: "PATCH",
 
-  const noLeidas = notificaciones.filter(
-    (notificacion) => !notificacion.leida,
-  ).length;
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+          },
+        },
+      );
 
-  const guardarEstado = (listaActualizada) => {
-    const todasEstanLeidas = listaActualizada.every(
-      (notificacion) => notificacion.leida,
-    );
+      await procesarRespuesta(
+        respuesta,
+      );
 
-    localStorage.setItem(
-      "reportard_notifications_read",
-      String(todasEstanLeidas),
-    );
+      setNotificaciones(
+        (anteriores) =>
+          anteriores.map(
+            (item) =>
+              item._id === id
+                ? {
+                    ...item,
+                    leida: true,
+                  }
+                : item,
+          ),
+      );
+    } catch (error) {
+      console.error(
+        "Error marcando notificación:",
+        error,
+      );
+
+      setError(
+        error.message ||
+          "No se pudo actualizar la notificación.",
+      );
+    }
   };
 
-  const marcarComoLeida = (id) => {
-    const listaActualizada = notificaciones.map((notificacion) =>
-      notificacion.id === id
-        ? { ...notificacion, leida: true }
-        : notificacion,
-    );
+  const marcarTodasComoLeidas =
+    async () => {
+      if (
+        noLeidas === 0 ||
+        marcandoTodas
+      ) {
+        return;
+      }
 
-    setNotificaciones(listaActualizada);
-    guardarEstado(listaActualizada);
-  };
+      try {
+        setMarcandoTodas(true);
+        setError("");
 
-  const marcarTodasComoLeidas = () => {
-    const listaActualizada = notificaciones.map((notificacion) => ({
-      ...notificacion,
-      leida: true,
-    }));
+        const respuesta = await fetch(
+          `${API_URL}/notifications/leer-todas`,
+          {
+            method: "PATCH",
 
-    setNotificaciones(listaActualizada);
-    guardarEstado(listaActualizada);
-  };
+            headers: {
+              Authorization:
+                `Bearer ${token}`,
+            },
+          },
+        );
+
+        await procesarRespuesta(
+          respuesta,
+        );
+
+        setNotificaciones(
+          (anteriores) =>
+            anteriores.map(
+              (notificacion) => ({
+                ...notificacion,
+                leida: true,
+              }),
+            ),
+        );
+      } catch (error) {
+        console.error(
+          "Error marcando todas:",
+          error,
+        );
+
+        setError(
+          error.message ||
+            "No se pudieron marcar las notificaciones.",
+        );
+      } finally {
+        setMarcandoTodas(false);
+      }
+    };
 
   const notificacionesVisibles =
     filtro === "no-leidas"
-      ? notificaciones.filter((notificacion) => !notificacion.leida)
+      ? notificaciones.filter(
+          (notificacion) =>
+            !notificacion.leida,
+        )
       : notificaciones;
 
   return (
@@ -149,7 +392,9 @@ export default function Notifications() {
           <div className="flex items-center justify-between">
             <button
               type="button"
-              onClick={() => navigate("/")}
+              onClick={() =>
+                navigate("/")
+              }
               aria-label="Volver al inicio"
               className="rounded-xl p-2 text-slate-300 hover:bg-white/5"
             >
@@ -170,18 +415,28 @@ export default function Notifications() {
 
             <button
               type="button"
-              onClick={marcarTodasComoLeidas}
+              onClick={
+                marcarTodasComoLeidas
+              }
+              disabled={
+                noLeidas === 0 ||
+                marcandoTodas
+              }
               aria-label="Marcar todas como leídas"
-              className="rounded-xl p-2 text-slate-400 hover:bg-white/5 hover:text-green-400"
+              className="rounded-xl p-2 text-slate-400 hover:bg-white/5 hover:text-green-400 disabled:cursor-not-allowed disabled:opacity-30"
             >
-              <CheckCheck size={22} />
+              <CheckCheck
+                size={22}
+              />
             </button>
           </div>
 
           <nav className="mt-4 grid grid-cols-2 rounded-2xl bg-white/5 p-1">
             <button
               type="button"
-              onClick={() => setFiltro("todas")}
+              onClick={() =>
+                setFiltro("todas")
+              }
               className={`rounded-xl px-4 py-2.5 text-sm font-medium ${
                 filtro === "todas"
                   ? "bg-white/10 text-white"
@@ -193,9 +448,14 @@ export default function Notifications() {
 
             <button
               type="button"
-              onClick={() => setFiltro("no-leidas")}
+              onClick={() =>
+                setFiltro(
+                  "no-leidas",
+                )
+              }
               className={`rounded-xl px-4 py-2.5 text-sm font-medium ${
-                filtro === "no-leidas"
+                filtro ===
+                "no-leidas"
                   ? "bg-white/10 text-white"
                   : "text-slate-500"
               }`}
@@ -206,51 +466,120 @@ export default function Notifications() {
         </header>
 
         <main className="px-4 py-5">
-          {notificacionesVisibles.length > 0 ? (
+          {cargando ? (
+            <div className="flex min-h-[55vh] items-center justify-center">
+              <p className="text-sm text-slate-500">
+                Cargando
+                notificaciones...
+              </p>
+            </div>
+          ) : error ? (
+            <div className="flex min-h-[55vh] flex-col items-center justify-center text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10 text-red-400">
+                <Bell size={28} />
+              </div>
+
+              <h2 className="mt-5 text-lg font-semibold">
+                No pudimos cargar tus
+                notificaciones
+              </h2>
+
+              <p className="mt-2 max-w-xs text-sm leading-6 text-slate-500">
+                {error}
+              </p>
+
+              <button
+                type="button"
+                onClick={
+                  cargarNotificaciones
+                }
+                className="mt-5 text-sm font-medium text-red-400"
+              >
+                Intentar nuevamente
+              </button>
+            </div>
+          ) : notificacionesVisibles.length >
+            0 ? (
             <div className="space-y-2">
-              {notificacionesVisibles.map((notificacion) => {
-                const configuracion = iconos[notificacion.tipo];
-                const Icono = configuracion.icono;
+              {notificacionesVisibles.map(
+                (notificacion) => {
+                  const configuracion =
+                    configuracionTipos[
+                      notificacion
+                        .tipo
+                    ] || {
+                      titulo:
+                        "Notificación",
+                      icono: Bell,
+                      color:
+                        "bg-slate-500/15 text-slate-400",
+                    };
 
-                return (
-                  <button
-                    type="button"
-                    key={notificacion.id}
-                    onClick={() =>
-                      marcarComoLeida(notificacion.id)
-                    }
-                    className={`relative flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition ${
-                      notificacion.leida
-                        ? "border-transparent bg-transparent"
-                        : "border-white/10 bg-white/[0.045]"
-                    }`}
-                  >
-                    <span
-                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${configuracion.color}`}
+                  const Icono =
+                    configuracion.icono;
+
+                  const nombreEmisor =
+                    obtenerNombreEmisor(
+                      notificacion,
+                    );
+
+                  return (
+                    <button
+                      type="button"
+                      key={
+                        notificacion._id
+                      }
+                      onClick={() =>
+                        marcarComoLeida(
+                          notificacion._id,
+                        )
+                      }
+                      className={`relative flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition ${
+                        notificacion.leida
+                          ? "border-transparent bg-transparent"
+                          : "border-white/10 bg-white/[0.045]"
+                      }`}
                     >
-                      <Icono size={21} />
-                    </span>
-
-                    <span className="min-w-0 flex-1">
-                      <span className="block font-semibold">
-                        {notificacion.titulo}
+                      <span
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${configuracion.color}`}
+                      >
+                        <Icono
+                          size={21}
+                        />
                       </span>
 
-                      <span className="mt-1 block text-sm leading-5 text-slate-400">
-                        {notificacion.mensaje}
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-semibold">
+                          {
+                            configuracion.titulo
+                          }
+                        </span>
+
+                        <span className="mt-1 block text-sm leading-5 text-slate-400">
+                          <strong className="font-medium text-slate-300">
+                            {
+                              nombreEmisor
+                            }
+                          </strong>{" "}
+                          {
+                            notificacion.mensaje
+                          }
+                        </span>
+
+                        <span className="mt-2 block text-xs text-slate-600">
+                          {obtenerTiempo(
+                            notificacion.createdAt,
+                          )}
+                        </span>
                       </span>
 
-                      <span className="mt-2 block text-xs text-slate-600">
-                        {notificacion.tiempo}
-                      </span>
-                    </span>
-
-                    {!notificacion.leida && (
-                      <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-red-500" />
-                    )}
-                  </button>
-                );
-              })}
+                      {!notificacion.leida && (
+                        <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-red-500" />
+                      )}
+                    </button>
+                  );
+                },
+              )}
             </div>
           ) : (
             <div className="flex min-h-[55vh] flex-col items-center justify-center text-center">
@@ -259,20 +588,33 @@ export default function Notifications() {
               </div>
 
               <h2 className="mt-5 text-lg font-semibold">
-                Todo está al día
+                {filtro ===
+                "no-leidas"
+                  ? "Todo está al día"
+                  : "Aún no tienes notificaciones"}
               </h2>
 
               <p className="mt-2 max-w-xs text-sm leading-6 text-slate-500">
-                No tienes notificaciones pendientes por leer.
+                {filtro ===
+                "no-leidas"
+                  ? "No tienes notificaciones pendientes por leer."
+                  : "Cuando alguien interactúe contigo, aparecerá aquí."}
               </p>
 
-              <button
-                type="button"
-                onClick={() => setFiltro("todas")}
-                className="mt-5 text-sm font-medium text-red-400"
-              >
-                Ver todas
-              </button>
+              {filtro ===
+                "no-leidas" && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFiltro(
+                      "todas",
+                    )
+                  }
+                  className="mt-5 text-sm font-medium text-red-400"
+                >
+                  Ver todas
+                </button>
+              )}
             </div>
           )}
         </main>

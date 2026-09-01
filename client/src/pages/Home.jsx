@@ -33,6 +33,8 @@ import {
   listarReportes,
 } from "../services/contentService";
 
+
+
 const categorias = [
   {
     nombre: "Infraestructura",
@@ -203,6 +205,9 @@ export default function Home({ onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [notificacionesNoLeidas, setNotificacionesNoLeidas] =
+    useState(0);
+
   const [perfil] = useState(obtenerPerfilGuardado);
   const [contenidoReal, setContenidoReal] =
     useState([]);
@@ -237,6 +242,42 @@ export default function Home({ onLogout }) {
 
   const historias = historiasPropias;
   const elementosFeed = contenidoReal;
+
+  useEffect(() => {
+    let vigente = true;
+
+    const cargarNoLeidas = async () => {
+      const token = obtenerToken();
+
+      if (!token) {
+        return;
+      }
+
+      try {
+        const respuesta =
+          await obtenerNotificacionesNoLeidas(
+            token,
+          );
+
+        if (vigente) {
+          setNotificacionesNoLeidas(
+            respuesta.total ?? 0,
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Error cargando notificaciones no leídas:",
+          error,
+        );
+      }
+    };
+
+    cargarNoLeidas();
+
+    return () => {
+      vigente = false;
+    };
+  }, [location.pathname]);
 
   useEffect(() => {
     let vigente = true;
@@ -440,11 +481,22 @@ export default function Home({ onLogout }) {
             <button
               type="button"
               onClick={() => navigate("/notificaciones")}
-              aria-label="Ver notificaciones"
+              aria-label={
+                notificacionesNoLeidas > 0
+                  ? `${notificacionesNoLeidas} notificaciones sin leer`
+                  : "Ver notificaciones"
+              }
               className="relative flex h-10 w-10 items-center justify-center rounded-2xl border border-white/5 bg-white/[0.035] text-slate-300 transition hover:bg-white/[0.07] active:scale-95"
             >
               <Bell size={21} />
 
+              {notificacionesNoLeidas > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-[#06101f] bg-red-500 px-1 text-[9px] font-bold leading-none text-white">
+                  {notificacionesNoLeidas > 99
+                    ? "99+"
+                    : notificacionesNoLeidas}
+                </span>
+              )}
             </button>
           </div>
 

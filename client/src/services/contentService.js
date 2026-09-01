@@ -3,6 +3,10 @@ const API_URL = (
   "http://localhost:5000/api"
 ).replace(/\/$/, "");
 
+import {
+  obtenerNotificacionesNoLeidas,
+} from "../services/notificationService";
+
 const procesarRespuesta = async (respuesta) => {
   let datos;
 
