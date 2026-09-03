@@ -32,6 +32,13 @@ import {
   listarPublicaciones,
   listarReportes,
 } from "../services/contentService";
+import {
+  obtenerNotificacionesNoLeidas,
+} from "../services/notificationService";
+
+import {
+  conectarSocket,
+} from "../services/socketService";
 
 
 
@@ -207,6 +214,35 @@ export default function Home({ onLogout }) {
 
   const [notificacionesNoLeidas, setNotificacionesNoLeidas] =
     useState(0);
+
+    useEffect(() => {
+  const token = obtenerToken();
+
+  if (!token) return undefined;
+
+  const socket = conectarSocket(token);
+
+  if (!socket) return undefined;
+
+  const recibirNotificacion = () => {
+    setNotificacionesNoLeidas(
+      (cantidadActual) =>
+        cantidadActual + 1,
+    );
+  };
+
+  socket.on(
+    "notificacion:nueva",
+    recibirNotificacion,
+  );
+
+  return () => {
+    socket.off(
+      "notificacion:nueva",
+      recibirNotificacion,
+    );
+  };
+}, []);
 
   const [perfil] = useState(obtenerPerfilGuardado);
   const [contenidoReal, setContenidoReal] =

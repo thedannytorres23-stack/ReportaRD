@@ -150,7 +150,7 @@ const obtenerClaveNivelVisto = (perfil) => {
 export default function Profile() {
   const navigate = useNavigate();
 
-  const [perfil] = useState(obtenerUsuarioAutenticado);
+const [perfil, setPerfil] = useState(obtenerUsuarioAutenticado);
 
   const [celebracionNivel, setCelebracionNivel] =
     useState(null);
@@ -171,6 +171,65 @@ export default function Profile() {
     useState("publicaciones");
 
   const iniciales = obtenerIniciales(perfil.nombre);
+
+  useEffect(() => {
+  let activo = true;
+
+  const cargarPerfilActualizado = async () => {
+    const token =
+      localStorage.getItem("reportard_token") || "";
+
+    if (!token) return;
+
+    try {
+      const API_URL = (
+        import.meta.env.VITE_API_URL ||
+        "http://localhost:5000/api"
+      ).replace(/\/$/, "");
+
+      const respuesta = await fetch(
+        `${API_URL}/auth/perfil`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const datos = await respuesta.json();
+
+      if (!respuesta.ok) {
+        throw new Error(
+          datos.mensaje ||
+            "No se pudo cargar el perfil.",
+        );
+      }
+
+      if (!activo) return;
+
+      setPerfil((actual) => ({
+        ...actual,
+        ...datos.usuario,
+      }));
+
+      localStorage.setItem(
+        "reportard_user",
+        JSON.stringify(datos.usuario),
+      );
+    } catch (error) {
+      console.error(
+        "Error actualizando perfil:",
+        error,
+      );
+    }
+  };
+
+  cargarPerfilActualizado();
+
+  return () => {
+    activo = false;
+  };
+}, []);
 
   useEffect(() => {
     let activo = true;
@@ -254,13 +313,19 @@ export default function Profile() {
     ],
   );
 
-  const estadisticas = {
-    seguidores: perfil.totalSeguidores ?? 0,
-    siguiendo: perfil.totalSiguiendo ?? 0,
-    comunidades: perfil.totalComunidades ?? 0,
-    reportes: reportesReales.length,
-  };
+ const estadisticas = {
+  seguidores:
+    perfil.totalSeguidores ?? 0,
 
+  siguiendo:
+    perfil.totalSeguidos ?? 0,
+
+  comunidades:
+    perfil.totalComunidades ?? 0,
+
+  reportes:
+    reportesReales.length,
+};
   useEffect(() => {
     if (cargandoContenido) return undefined;
 

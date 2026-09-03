@@ -16,6 +16,10 @@ import {
 
 import { useNavigate } from "react-router";
 
+import {
+  conectarSocket,
+} from "../services/socketService";
+
 const API_URL = (
   import.meta.env.VITE_API_URL ||
   "http://localhost:5000/api"
@@ -23,44 +27,51 @@ const API_URL = (
 
 const configuracionTipos = {
   confirmacion: {
-    titulo: "Nueva confirmación",
+    titulo: "Reporte confirmado",
+    descripcion: "Confirmación ciudadana",
     icono: CheckCircle2,
     color:
-      "bg-green-500/15 text-green-400",
+      "bg-emerald-500/10 text-emerald-400 border-emerald-500/15",
   },
 
   comentario: {
     titulo: "Nuevo comentario",
+    descripcion: "Conversación ciudadana",
     icono: MessageCircle,
     color:
-      "bg-blue-500/15 text-blue-400",
+      "bg-blue-500/10 text-blue-400 border-blue-500/15",
   },
 
   respuesta: {
     titulo: "Nueva respuesta",
+    descripcion: "Continuaron la conversación",
     icono: Reply,
     color:
-      "bg-cyan-500/15 text-cyan-400",
+      "bg-cyan-500/10 text-cyan-400 border-cyan-500/15",
   },
 
   reaccion: {
     titulo: "Nueva reacción",
+    descripcion: "Interacción con tu contenido",
     icono: Heart,
     color:
-      "bg-red-500/15 text-red-400",
+      "bg-red-500/10 text-red-400 border-red-500/15",
   },
 
   seguimiento: {
     titulo: "Nuevo seguidor",
+    descripcion: "Tu comunidad está creciendo",
     icono: UserPlus,
     color:
-      "bg-violet-500/15 text-violet-400",
+      "bg-violet-500/10 text-violet-400 border-violet-500/15",
   },
 };
 
 const obtenerToken = () => {
   const tokenDirecto =
-    localStorage.getItem("reportard_token");
+    localStorage.getItem(
+      "reportard_token",
+    );
 
   if (tokenDirecto) {
     return tokenDirecto;
@@ -120,6 +131,19 @@ const obtenerNombreEmisor = (
   );
 };
 
+const obtenerIniciales = (
+  nombre = "",
+) => {
+  return nombre
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((parte) =>
+      parte.charAt(0).toUpperCase(),
+    )
+    .join("");
+};
+
 const obtenerTiempo = (
   fecha,
 ) => {
@@ -151,9 +175,7 @@ const obtenerTiempo = (
   );
 
   if (horas < 24) {
-    return `Hace ${horas} ${
-      horas === 1 ? "h" : "h"
-    }`;
+    return `Hace ${horas} h`;
   }
 
   const dias = Math.floor(
@@ -171,6 +193,7 @@ const obtenerTiempo = (
     {
       day: "numeric",
       month: "short",
+
       year:
         creada.getFullYear() !==
         ahora.getFullYear()
@@ -202,6 +225,11 @@ export default function Notifications() {
     setMarcandoTodas,
   ] = useState(false);
 
+  const [
+    notificacionNuevaId,
+    setNotificacionNuevaId,
+  ] = useState(null);
+
   const token = obtenerToken();
 
   const cargarNotificaciones =
@@ -212,7 +240,6 @@ export default function Notifications() {
         );
 
         setCargando(false);
-
         return;
       }
 
@@ -242,14 +269,14 @@ export default function Notifications() {
             ? datos.notificaciones
             : [],
         );
-      } catch (error) {
+      } catch (errorSolicitud) {
         console.error(
           "Error cargando notificaciones:",
-          error,
+          errorSolicitud,
         );
 
         setError(
-          error.message ||
+          errorSolicitud.message ||
             "No se pudieron cargar las notificaciones.",
         );
       } finally {
@@ -260,6 +287,73 @@ export default function Notifications() {
   useEffect(() => {
     cargarNotificaciones();
   }, []);
+
+  useEffect(() => {
+    if (!token) {
+      return undefined;
+    }
+
+    const socket =
+      conectarSocket(token);
+
+    if (!socket) {
+      return undefined;
+    }
+
+    const recibirNotificacion = (
+      notificacion,
+    ) => {
+      if (!notificacion?._id) {
+        return;
+      }
+
+      setNotificaciones(
+        (anteriores) => {
+          const yaExiste =
+            anteriores.some(
+              (item) =>
+                item._id ===
+                notificacion._id,
+            );
+
+          if (yaExiste) {
+            return anteriores;
+          }
+
+          return [
+            notificacion,
+            ...anteriores,
+          ];
+        },
+      );
+
+      setNotificacionNuevaId(
+        notificacion._id,
+      );
+
+      window.setTimeout(() => {
+        setNotificacionNuevaId(
+          (actual) =>
+            actual ===
+            notificacion._id
+              ? null
+              : actual,
+        );
+      }, 1200);
+    };
+
+    socket.on(
+      "notificacion:nueva",
+      recibirNotificacion,
+    );
+
+    return () => {
+      socket.off(
+        "notificacion:nueva",
+        recibirNotificacion,
+      );
+    };
+  }, [token]);
 
   const noLeidas =
     notificaciones.filter(
@@ -311,14 +405,14 @@ export default function Notifications() {
                 : item,
           ),
       );
-    } catch (error) {
+    } catch (errorSolicitud) {
       console.error(
         "Error marcando notificación:",
-        error,
+        errorSolicitud,
       );
 
       setError(
-        error.message ||
+        errorSolicitud.message ||
           "No se pudo actualizar la notificación.",
       );
     }
@@ -362,14 +456,14 @@ export default function Notifications() {
               }),
             ),
         );
-      } catch (error) {
+      } catch (errorSolicitud) {
         console.error(
           "Error marcando todas:",
-          error,
+          errorSolicitud,
         );
 
         setError(
-          error.message ||
+          errorSolicitud.message ||
             "No se pudieron marcar las notificaciones.",
         );
       } finally {
@@ -388,100 +482,151 @@ export default function Notifications() {
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <div className="mx-auto min-h-screen max-w-md border-x border-white/5 bg-[#06101f]">
-        <header className="sticky top-0 z-20 border-b border-white/10 bg-[#06101f]/95 px-4 py-4 backdrop-blur-xl">
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() =>
-                navigate("/")
-              }
-              aria-label="Volver al inicio"
-              className="rounded-xl p-2 text-slate-300 hover:bg-white/5"
-            >
-              <ArrowLeft size={22} />
-            </button>
 
-            <div className="text-center">
-              <h1 className="font-bold">
-                Notificaciones
-              </h1>
+        <header className="sticky top-0 z-30 border-b border-white/[0.07] bg-[#06101f]/90 backdrop-blur-2xl">
+          <div className="px-4 pb-4 pt-3">
+
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() =>
+                  navigate("/")
+                }
+                aria-label="Volver al inicio"
+                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.035] text-slate-300 transition hover:bg-white/[0.07] active:scale-95"
+              >
+                <ArrowLeft size={20} />
+              </button>
+
+              <div className="text-center">
+                <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-slate-600">
+                  Reporta
+                  <span className="text-red-500">
+                    RD
+                  </span>
+                </p>
+
+                <h1 className="mt-0.5 text-base font-bold tracking-tight">
+                  Notificaciones
+                </h1>
+              </div>
+
+              <button
+                type="button"
+                onClick={
+                  marcarTodasComoLeidas
+                }
+                disabled={
+                  noLeidas === 0 ||
+                  marcandoTodas
+                }
+                aria-label="Marcar todas como leídas"
+                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.035] text-slate-400 transition hover:border-emerald-500/20 hover:bg-emerald-500/10 hover:text-emerald-400 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                <CheckCheck size={20} />
+              </button>
+            </div>
+
+            <div className="mt-5 flex items-end justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
+                    <Bell size={16} />
+                  </span>
+
+                  <div>
+                    <p className="text-sm font-semibold text-slate-200">
+                      Tu actividad
+                    </p>
+
+                    <p className="mt-0.5 text-[11px] text-slate-500">
+                      Interacciones de tu comunidad
+                    </p>
+                  </div>
+                </div>
+              </div>
 
               {noLeidas > 0 && (
-                <p className="text-xs text-red-400">
-                  {noLeidas} sin leer
-                </p>
+                <span className="rounded-full border border-red-500/20 bg-red-500/10 px-2.5 py-1 text-[10px] font-bold text-red-400">
+                  {noLeidas > 99
+                    ? "99+"
+                    : noLeidas}{" "}
+                  nuevas
+                </span>
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={
-                marcarTodasComoLeidas
-              }
-              disabled={
-                noLeidas === 0 ||
-                marcandoTodas
-              }
-              aria-label="Marcar todas como leídas"
-              className="rounded-xl p-2 text-slate-400 hover:bg-white/5 hover:text-green-400 disabled:cursor-not-allowed disabled:opacity-30"
-            >
-              <CheckCheck
-                size={22}
-              />
-            </button>
+            <nav className="mt-4 grid grid-cols-2 rounded-2xl border border-white/[0.05] bg-white/[0.025] p-1">
+              <button
+                type="button"
+                onClick={() =>
+                  setFiltro("todas")
+                }
+                className={`rounded-xl px-4 py-2.5 text-xs font-semibold transition ${
+                  filtro === "todas"
+                    ? "bg-white/[0.08] text-white shadow-sm"
+                    : "text-slate-500 hover:text-slate-300"
+                }`}
+              >
+                Todas
+                <span className="ml-1.5 text-[10px] text-slate-500">
+                  {notificaciones.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setFiltro(
+                    "no-leidas",
+                  )
+                }
+                className={`rounded-xl px-4 py-2.5 text-xs font-semibold transition ${
+                  filtro === "no-leidas"
+                    ? "bg-red-500/10 text-red-400"
+                    : "text-slate-500 hover:text-slate-300"
+                }`}
+              >
+                No leídas
+
+                {noLeidas > 0 && (
+                  <span className="ml-1.5 text-[10px]">
+                    {noLeidas}
+                  </span>
+                )}
+              </button>
+            </nav>
           </div>
-
-          <nav className="mt-4 grid grid-cols-2 rounded-2xl bg-white/5 p-1">
-            <button
-              type="button"
-              onClick={() =>
-                setFiltro("todas")
-              }
-              className={`rounded-xl px-4 py-2.5 text-sm font-medium ${
-                filtro === "todas"
-                  ? "bg-white/10 text-white"
-                  : "text-slate-500"
-              }`}
-            >
-              Todas
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                setFiltro(
-                  "no-leidas",
-                )
-              }
-              className={`rounded-xl px-4 py-2.5 text-sm font-medium ${
-                filtro ===
-                "no-leidas"
-                  ? "bg-white/10 text-white"
-                  : "text-slate-500"
-              }`}
-            >
-              No leídas
-            </button>
-          </nav>
         </header>
 
         <main className="px-4 py-5">
           {cargando ? (
-            <div className="flex min-h-[55vh] items-center justify-center">
-              <p className="text-sm text-slate-500">
-                Cargando
-                notificaciones...
-              </p>
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map(
+                (item) => (
+                  <div
+                    key={item}
+                    className="flex animate-pulse items-center gap-3 rounded-3xl border border-white/[0.04] bg-white/[0.025] p-4"
+                  >
+                    <div className="h-12 w-12 shrink-0 rounded-2xl bg-white/[0.06]" />
+
+                    <div className="flex-1">
+                      <div className="h-3 w-28 rounded bg-white/[0.07]" />
+                      <div className="mt-3 h-2.5 w-4/5 rounded bg-white/[0.05]" />
+                      <div className="mt-2 h-2 w-16 rounded bg-white/[0.04]" />
+                    </div>
+                  </div>
+                ),
+              )}
             </div>
           ) : error ? (
-            <div className="flex min-h-[55vh] flex-col items-center justify-center text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10 text-red-400">
-                <Bell size={28} />
+            <div className="flex min-h-[55vh] flex-col items-center justify-center px-6 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-3xl border border-red-500/15 bg-red-500/10 text-red-400">
+                <Bell size={27} />
               </div>
 
-              <h2 className="mt-5 text-lg font-semibold">
-                No pudimos cargar tus
-                notificaciones
+              <h2 className="mt-5 text-lg font-bold">
+                No pudimos cargar tus notificaciones
               </h2>
 
               <p className="mt-2 max-w-xs text-sm leading-6 text-slate-500">
@@ -493,26 +638,27 @@ export default function Notifications() {
                 onClick={
                   cargarNotificaciones
                 }
-                className="mt-5 text-sm font-medium text-red-400"
+                className="mt-6 rounded-2xl bg-white/[0.06] px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/[0.1]"
               >
                 Intentar nuevamente
               </button>
             </div>
           ) : notificacionesVisibles.length >
             0 ? (
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {notificacionesVisibles.map(
                 (notificacion) => {
                   const configuracion =
                     configuracionTipos[
-                      notificacion
-                        .tipo
+                      notificacion.tipo
                     ] || {
                       titulo:
-                        "Notificación",
+                        "Actividad nueva",
+                      descripcion:
+                        "Actividad en ReportaRD",
                       icono: Bell,
                       color:
-                        "bg-slate-500/15 text-slate-400",
+                        "bg-slate-500/10 text-slate-400 border-slate-500/15",
                     };
 
                   const Icono =
@@ -522,6 +668,19 @@ export default function Notifications() {
                     obtenerNombreEmisor(
                       notificacion,
                     );
+
+                  const fotoEmisor =
+                    notificacion.emisor
+                      ?.foto || "";
+
+                  const iniciales =
+                    obtenerIniciales(
+                      nombreEmisor,
+                    ) || "RD";
+
+                  const esNueva =
+                    notificacionNuevaId ===
+                    notificacion._id;
 
                   return (
                     <button
@@ -534,71 +693,121 @@ export default function Notifications() {
                           notificacion._id,
                         )
                       }
-                      className={`relative flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition ${
+                      className={`notification-card relative flex w-full overflow-hidden rounded-3xl border p-4 text-left transition-all duration-300 active:scale-[0.99] ${
                         notificacion.leida
-                          ? "border-transparent bg-transparent"
-                          : "border-white/10 bg-white/[0.045]"
+                          ? "border-white/[0.035] bg-white/[0.015] hover:bg-white/[0.035]"
+                          : "border-white/[0.08] bg-white/[0.045] shadow-lg shadow-black/10 hover:border-white/[0.12] hover:bg-white/[0.06]"
+                      } ${
+                        esNueva
+                          ? "notification-new"
+                          : ""
                       }`}
                     >
-                      <span
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${configuracion.color}`}
-                      >
-                        <Icono
-                          size={21}
-                        />
-                      </span>
-
-                      <span className="min-w-0 flex-1">
-                        <span className="block font-semibold">
-                          {
-                            configuracion.titulo
-                          }
-                        </span>
-
-                        <span className="mt-1 block text-sm leading-5 text-slate-400">
-                          <strong className="font-medium text-slate-300">
-                            {
-                              nombreEmisor
-                            }
-                          </strong>{" "}
-                          {
-                            notificacion.mensaje
-                          }
-                        </span>
-
-                        <span className="mt-2 block text-xs text-slate-600">
-                          {obtenerTiempo(
-                            notificacion.createdAt,
-                          )}
-                        </span>
-                      </span>
-
                       {!notificacion.leida && (
-                        <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-red-500" />
+                        <span className="absolute bottom-3 left-0 top-3 w-[3px] rounded-r-full bg-red-500" />
                       )}
+
+                      <div className="flex w-full gap-3.5">
+
+                        <div className="relative shrink-0">
+                          {fotoEmisor ? (
+                            <img
+                              src={
+                                fotoEmisor
+                              }
+                              alt={`Foto de ${nombreEmisor}`}
+                              className="h-12 w-12 rounded-2xl border border-white/10 object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/[0.06] bg-gradient-to-br from-slate-800 to-slate-900 text-xs font-bold text-slate-300">
+                              {iniciales}
+                            </div>
+                          )}
+
+                          <span
+                            className={`absolute -bottom-1.5 -right-1.5 flex h-6 w-6 items-center justify-center rounded-lg border-2 border-[#081321] ${configuracion.color}`}
+                          >
+                            <Icono
+                              size={12}
+                              strokeWidth={
+                                2.4
+                              }
+                            />
+                          </span>
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-3">
+
+                            <div className="min-w-0">
+                              <p className="truncate text-[13px] font-bold text-slate-100">
+                                {
+                                  nombreEmisor
+                                }
+                              </p>
+
+                              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.1em] text-slate-600">
+                                {
+                                  configuracion.descripcion
+                                }
+                              </p>
+                            </div>
+
+                            {!notificacion.leida && (
+                              <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.45)]" />
+                            )}
+                          </div>
+
+                          <p className="mt-2 text-sm leading-5 text-slate-400">
+                            {
+                              notificacion.mensaje
+                            }
+                          </p>
+
+                          <div className="mt-3 flex items-center gap-2">
+                            <span className="text-[10px] font-medium text-slate-600">
+                              {obtenerTiempo(
+                                notificacion.createdAt,
+                              )}
+                            </span>
+
+                            {!notificacion.leida && (
+                              <>
+                                <span className="h-1 w-1 rounded-full bg-slate-700" />
+
+                                <span className="text-[10px] font-semibold text-red-400">
+                                  Nueva
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </button>
                   );
                 },
               )}
             </div>
           ) : (
-            <div className="flex min-h-[55vh] flex-col items-center justify-center text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/5 text-slate-500">
-                <Bell size={28} />
+            <div className="flex min-h-[55vh] flex-col items-center justify-center px-6 text-center">
+              <div className="relative flex h-20 w-20 items-center justify-center rounded-[1.7rem] border border-white/[0.06] bg-white/[0.025] text-slate-500">
+                <Bell size={30} />
+
+                <span className="absolute right-4 top-4 h-2 w-2 rounded-full bg-emerald-400" />
               </div>
 
-              <h2 className="mt-5 text-lg font-semibold">
+              <h2 className="mt-6 text-lg font-bold">
                 {filtro ===
                 "no-leidas"
                   ? "Todo está al día"
-                  : "Aún no tienes notificaciones"}
+                  : "Sin actividad todavía"}
               </h2>
 
-              <p className="mt-2 max-w-xs text-sm leading-6 text-slate-500">
+              <p className="mt-2 max-w-[17rem] text-sm leading-6 text-slate-500">
                 {filtro ===
                 "no-leidas"
-                  ? "No tienes notificaciones pendientes por leer."
-                  : "Cuando alguien interactúe contigo, aparecerá aquí."}
+                  ? "Ya revisaste toda tu actividad reciente."
+                  : "Cuando alguien interactúe con tus publicaciones, reportes o perfil, aparecerá aquí."}
               </p>
 
               {filtro ===
@@ -610,15 +819,44 @@ export default function Notifications() {
                       "todas",
                     )
                   }
-                  className="mt-5 text-sm font-medium text-red-400"
+                  className="mt-6 rounded-2xl border border-white/[0.07] bg-white/[0.035] px-5 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-white/[0.07]"
                 >
-                  Ver todas
+                  Ver historial
                 </button>
               )}
             </div>
           )}
         </main>
       </div>
+
+      <style>{`
+        .notification-new {
+          animation: notificationEnter 520ms cubic-bezier(.2,.8,.2,1);
+        }
+
+        @keyframes notificationEnter {
+          0% {
+            opacity: 0;
+            transform: translateY(-12px) scale(.98);
+          }
+
+          55% {
+            opacity: 1;
+            transform: translateY(2px) scale(1.005);
+          }
+
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .notification-new {
+            animation: none;
+          }
+        }
+      `}</style>
     </div>
   );
 }
