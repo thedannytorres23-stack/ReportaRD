@@ -6,7 +6,6 @@ import {
   Construction,
   MapPin,
   MessageCircle,
-  Send,
   Share2,
 } from "lucide-react";
 
@@ -28,6 +27,8 @@ import {
   obtenerReacciones,
   reaccionarContenido,
 } from "../services/reactionService";
+
+import CommentsPanel from "./CommentsPanel";
 
 
 const REACCIONES_REPORTE = [
@@ -444,18 +445,9 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
     }
   };
 
-  const contarComentarios = (lista) => {
-    return lista.reduce(
-      (total, comentario) =>
-        total +
-        1 +
-        contarComentarios(comentario.respuestas || []),
-      0,
-    );
-  };
-
-  const totalComentarios = comentariosCargados
-    ? contarComentarios(comentarios)
+ const totalComentarios =
+  comentariosCargados
+    ? comentarios.length
     : reporte.comentarios ?? 0;
 
   const totalCompartidos =
@@ -1136,216 +1128,54 @@ export default function ReportCard({ reporte, modoDetalle = false }) {
         </button>
       </footer>
 
-      {mostrarComentarios && (
-        <section className="border-t border-white/10 px-4 py-4">
-          <form
-            onSubmit={agregarComentario}
-            className="flex items-center gap-2"
-          >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-red-500 text-xs font-bold">
-              {usuarioActual.foto ? (
-                <img
-                  src={usuarioActual.foto}
-                  alt={usuarioActual.nombre || "Usuario"}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                obtenerIniciales(
-                  usuarioActual.nombre || "RD",
-                )
-              )}
-            </div>
-
-            <input
-              type="text"
-              value={nuevoComentario}
-              onChange={(evento) =>
-                setNuevoComentario(evento.target.value)
-              }
-              placeholder="Comenta sobre este reporte..."
-              className="min-w-0 flex-1 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-blue-500/50"
-            />
-
-            <button
-              type="submit"
-              disabled={!nuevoComentario.trim() || enviandoComentario}
-              aria-label="Enviar comentario"
-              className="rounded-full bg-blue-500 p-2.5 text-white transition disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <Send size={17} />
-            </button>
-          </form>
-
-          {errorComentarios && (
-            <div className="mt-3 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-300">
-              {errorComentarios}
-            </div>
-          )}
-
-          <div className="mt-4 space-y-4">
-            {cargandoComentarios && !comentariosCargados ? (
-              <p className="py-3 text-center text-xs text-slate-500">
-                Cargando comentarios...
-              </p>
-            ) : comentarios.length === 0 ? (
-              <p className="py-3 text-center text-xs text-slate-500">
-                Sé el primero en comentar sobre este reporte.
-              </p>
-            ) : (
-              comentarios.map((comentario) => (
-                <article key={comentario.id}>
-                  <div className="flex items-start gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        abrirPerfilComentario(
-                          comentario.autorId,
-                        )
-                      }
-                      className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-red-500 text-[10px] font-bold"
-                    >
-                      {comentario.foto ? (
-                        <img
-                          src={comentario.foto}
-                          alt={comentario.autor}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        comentario.iniciales
-                      )}
-                    </button>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="rounded-2xl bg-white/5 px-3 py-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            abrirPerfilComentario(
-                              comentario.autorId,
-                            )
-                          }
-                          className="text-xs font-semibold hover:underline"
-                        >
-                          {comentario.autor}
-                        </button>
-
-                        <p className="mt-1 break-words text-sm text-slate-300">
-                          {comentario.contenido}
-                        </p>
-                      </div>
-
-                      <div className="mt-1 flex items-center gap-3 px-2 text-[10px] text-slate-500">
-                        <span>{comentario.tiempo}</span>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setComentarioRespondiendo(
-                              comentario.id,
-                            );
-
-                            setNuevaRespuesta("");
-                          }}
-                          className="font-medium hover:text-blue-400"
-                        >
-                          Responder
-                        </button>
-                      </div>
-
-                      {comentario.respuestas.map(
-                        (respuesta) => (
-                          <div
-                            key={respuesta.id}
-                            className="ml-5 mt-3 flex items-start gap-2"
-                          >
-                            <button
-                              type="button"
-                              onClick={() =>
-                                abrirPerfilComentario(
-                                  respuesta.autorId,
-                                )
-                              }
-                              className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-500/20 text-[9px] font-bold text-blue-300"
-                            >
-                              {respuesta.foto ? (
-                                <img
-                                  src={respuesta.foto}
-                                  alt={respuesta.autor}
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                respuesta.iniciales
-                              )}
-                            </button>
-
-                            <div className="rounded-2xl bg-white/5 px-3 py-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  abrirPerfilComentario(
-                                    respuesta.autorId,
-                                  )
-                                }
-                                className="text-xs font-semibold hover:underline"
-                              >
-                                {respuesta.autor}
-                              </button>
-
-                              <p className="mt-1 text-sm text-slate-300">
-                                {respuesta.contenido}
-                              </p>
-                            </div>
-                          </div>
-                        ),
-                      )}
-
-                      {comentarioRespondiendo ===
-                        comentario.id && (
-                          <div className="ml-5 mt-3 flex gap-2">
-                            <input
-                              type="text"
-                              autoFocus
-                              value={nuevaRespuesta}
-                              onChange={(evento) =>
-                                setNuevaRespuesta(
-                                  evento.target.value,
-                                )
-                              }
-                              onKeyDown={(evento) => {
-                                if (
-                                  evento.key === "Enter" &&
-                                  !enviandoRespuesta
-                                ) {
-                                  evento.preventDefault();
-                                  agregarRespuesta(
-                                    comentario.id,
-                                  );
-                                }
-                              }}
-                              placeholder={`Responder a ${comentario.autor}...`}
-                              className="min-w-0 flex-1 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none"
-                            />
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                agregarRespuesta(comentario.id)
-                              }
-                              disabled={!nuevaRespuesta.trim() || enviandoRespuesta}
-                              className="rounded-full bg-blue-500 p-2 text-white disabled:opacity-40"
-                            >
-                              <Send size={14} />
-                            </button>
-                          </div>
-                        )}
-                    </div>
-                  </div>
-                </article>
-              ))
-            )}
-          </div>
-        </section>
-      )}
+     <CommentsPanel
+  abierto={mostrarComentarios}
+  onCerrar={() =>
+    setMostrarComentarios(false)
+  }
+  comentarios={comentarios}
+  cargando={
+    cargandoComentarios &&
+    !comentariosCargados
+  }
+  error={errorComentarios}
+  usuarioActual={usuarioActual}
+  nuevoComentario={nuevoComentario}
+  setNuevoComentario={
+    setNuevoComentario
+  }
+  enviandoComentario={
+    enviandoComentario
+  }
+  onEnviarComentario={
+    agregarComentario
+  }
+  comentarioRespondiendo={
+    comentarioRespondiendo
+  }
+  setComentarioRespondiendo={
+    setComentarioRespondiendo
+  }
+  nuevaRespuesta={nuevaRespuesta}
+  setNuevaRespuesta={
+    setNuevaRespuesta
+  }
+  enviandoRespuesta={
+    enviandoRespuesta
+  }
+  onEnviarRespuesta={
+    agregarRespuesta
+  }
+  onAbrirPerfil={
+    abrirPerfilComentario
+  }
+  obtenerIniciales={
+    obtenerIniciales
+  }
+  totalComentarios={
+    totalComentarios
+  }
+/>
     </article>
   );
 }
