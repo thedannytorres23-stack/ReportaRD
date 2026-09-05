@@ -55,6 +55,7 @@ export const enviarMensaje = (
   conversacionId,
   contenido,
   token,
+  respondeA = null,
 ) => {
   return solicitar(
     `/chats/${conversacionId}/mensajes`,
@@ -64,6 +65,7 @@ export const enviarMensaje = (
       body: JSON.stringify({
         tipo: "texto",
         contenido,
+        respondeA,
       }),
     },
   );
@@ -94,4 +96,8 @@ export const crearGrupo = (datosGrupo, token) => {
     method: "POST",
     body: JSON.stringify(datosGrupo),
   });
+};
+
+export const obtenerTotalMensajesNoLeidos = (token) => {
+  return solicitar("/chats/no-leidos", token);
 };
