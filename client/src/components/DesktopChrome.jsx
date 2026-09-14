@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   UserRound,
   UsersRound,
+  X,
 } from "lucide-react";
 
 import { useLocation, useNavigate } from "react-router";
@@ -189,6 +190,9 @@ export default function DesktopChrome({
 
   const [mensajesNoLeidos, setMensajesNoLeidos] =
     useState(0);
+
+  const [mostrarCerrarSesion, setMostrarCerrarSesion] =
+    useState(false);
 
   const perfil = obtenerPerfil();
   const iniciales = obtenerIniciales(
@@ -381,6 +385,25 @@ export default function DesktopChrome({
     };
   }, []);
 
+  useEffect(() => {
+    if (!mostrarCerrarSesion) return undefined;
+
+    const manejarTecla = (event) => {
+      if (event.key === "Escape") {
+        setMostrarCerrarSesion(false);
+      }
+    };
+
+    const overflowAnterior = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", manejarTecla);
+
+    return () => {
+      document.body.style.overflow = overflowAnterior;
+      window.removeEventListener("keydown", manejarTecla);
+    };
+  }, [mostrarCerrarSesion]);
+
   useLayoutEffect(() => {
     if (
       perfilCompletado < 100 ||
@@ -500,13 +523,12 @@ export default function DesktopChrome({
         );
 
   const cerrarSesion = () => {
-    if (
-      window.confirm(
-        "¿Seguro que deseas cerrar sesión?",
-      )
-    ) {
-      onLogout();
-    }
+    setMostrarCerrarSesion(true);
+  };
+
+  const confirmarCierreSesion = () => {
+    setMostrarCerrarSesion(false);
+    onLogout();
   };
 
   return (
@@ -875,12 +897,15 @@ export default function DesktopChrome({
               mt-2 flex w-full
               items-center gap-3
               rounded-lg
+              border border-transparent
               px-3 py-2.5
               text-[13px]
-              text-slate-600
-              transition-colors
+              text-slate-500
+              transition-all duration-200
+              hover:border-red-400/10
               hover:bg-red-500/[0.07]
               hover:text-red-300
+              active:scale-[0.99]
             "
           >
             <LogOut size={17} />
@@ -1222,6 +1247,99 @@ export default function DesktopChrome({
           </div>
         </section>
       </aside>
+
+
+      {mostrarCerrarSesion && (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="reportard-logout-title"
+        >
+          <button
+            type="button"
+            aria-label="Cancelar cierre de sesión"
+            onClick={() => setMostrarCerrarSesion(false)}
+            className="absolute inset-0 cursor-default bg-slate-950/80 backdrop-blur-md"
+          />
+
+          <section className="relative w-full max-w-[27rem] overflow-hidden rounded-[1.6rem] border border-white/10 bg-[#081525] shadow-[0_32px_100px_rgba(0,0,0,.58)]">
+            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+              <div className="absolute -right-16 -top-20 h-52 w-52 rounded-full bg-red-500/10 blur-3xl" />
+              <div className="absolute -bottom-24 -left-20 h-56 w-56 rounded-full bg-blue-500/[0.07] blur-3xl" />
+            </div>
+
+            <div className="relative p-6 sm:p-7">
+              <div className="flex items-start justify-between gap-5">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-red-400/15 bg-red-500/10 text-red-300 shadow-[0_12px_35px_rgba(239,68,68,.12)]">
+                  <LogOut size={21} />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setMostrarCerrarSesion(false)}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.035] text-slate-500 transition hover:bg-white/[0.07] hover:text-slate-200"
+                  aria-label="Cerrar modal"
+                >
+                  <X size={17} />
+                </button>
+              </div>
+
+              <div className="mt-5">
+                <p className="text-[9px] font-black uppercase tracking-[0.24em] text-red-400">
+                  Seguridad de la cuenta
+                </p>
+                <h2 id="reportard-logout-title" className="mt-2 text-2xl font-black tracking-[-0.025em] text-white">
+                  ¿Cerrar sesión?
+                </h2>
+                <p className="mt-2 max-w-sm text-sm leading-6 text-slate-400">
+                  Saldrás de tu cuenta en este dispositivo. Tu perfil, publicaciones y conversaciones permanecerán guardados.
+                </p>
+              </div>
+
+              <div className="mt-5 flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-3.5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-500 via-violet-500 to-red-500 text-xs font-black text-white">
+                  {perfil.foto ? (
+                    <img
+                      src={perfil.foto}
+                      alt={`Foto de ${perfil.nombre}`}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    iniciales
+                  )}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-slate-200">{perfil.nombre}</p>
+                  <p className="mt-0.5 truncate text-[11px] text-slate-500">@{perfil.usuario}</p>
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setMostrarCerrarSesion(false)}
+                  className="rounded-xl border border-white/10 bg-white/[0.035] px-4 py-3 text-sm font-bold text-slate-200 transition hover:bg-white/[0.07] active:scale-[0.985]"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmarCierreSesion}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-500 to-orange-500 px-4 py-3 text-sm font-black text-white shadow-[0_14px_35px_rgba(239,68,68,.2)] transition hover:brightness-110 active:scale-[0.985]"
+                >
+                  <LogOut size={16} />
+                  Cerrar sesión
+                </button>
+              </div>
+
+              <p className="mt-4 text-center text-[10px] leading-4 text-slate-600">
+                También puedes volver a iniciar sesión cuando quieras.
+              </p>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
