@@ -8,7 +8,9 @@ const procesarRespuesta = async (respuesta) => {
   try {
     datos = await respuesta.json();
   } catch {
-    throw new Error("El servidor devolvió una respuesta inválida.");
+    throw new Error(
+      "El servidor devolvió una respuesta inválida.",
+    );
   }
 
   if (!respuesta.ok) {
@@ -22,7 +24,11 @@ const procesarRespuesta = async (respuesta) => {
 
 const realizarPeticion = async (ruta, opciones = {}) => {
   try {
-    const respuesta = await fetch(`${API_URL}${ruta}`, opciones);
+    const respuesta = await fetch(
+      `${API_URL}${ruta}`,
+      opciones,
+    );
+
     return procesarRespuesta(respuesta);
   } catch (error) {
     if (error instanceof TypeError) {
@@ -36,11 +42,31 @@ const realizarPeticion = async (ruta, opciones = {}) => {
   }
 };
 
-export const iniciarSesion = ({ identificador, contrasena }) => {
+export const iniciarSesion = ({
+  identificador,
+  contrasena,
+}) => {
   return realizarPeticion("/auth/login", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ identificador, contrasena }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      identificador,
+      contrasena,
+    }),
+  });
+};
+
+export const iniciarSesionGoogle = (credential) => {
+  return realizarPeticion("/auth/google", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      credential,
+    }),
   });
 };
 
@@ -52,18 +78,30 @@ export const registrarUsuario = ({
 }) => {
   return realizarPeticion("/auth/registro", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nombre, usuario, correo, contrasena }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      nombre,
+      usuario,
+      correo,
+      contrasena,
+    }),
   });
 };
 
 export const obtenerMiPerfil = (token) => {
   return realizarPeticion("/auth/perfil", {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
 };
 
-export const actualizarMiPerfil = (datosPerfil, token) => {
+export const actualizarMiPerfil = (
+  datosPerfil,
+  token,
+) => {
   return realizarPeticion("/auth/perfil", {
     method: "PUT",
     headers: {
