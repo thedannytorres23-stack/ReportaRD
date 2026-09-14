@@ -24,6 +24,7 @@ import Messages from "./pages/Messages";
 import ContentDetail from "./pages/ContentDetail";
 import Live from "./pages/Live";
 import { obtenerMiPerfil } from "./services/authService";
+import Privacy from "./pages/Privacy";
 
 const obtenerEstadoInicial = () => {
   const token = localStorage.getItem("reportard_token");
@@ -137,15 +138,15 @@ export default function App() {
         }
       >
         <Routes>
+          <Route path="/privacidad" element={<Privacy />} />
+
           <Route
             path="/login"
             element={
               autenticado ? (
                 <Navigate to="/" replace />
               ) : (
-                <Login
-                  onLogin={autenticarUsuario}
-                />
+                <Login onLogin={autenticarUsuario} />
               )
             }
           />
